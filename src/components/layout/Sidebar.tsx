@@ -24,7 +24,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           <ListItemIcon>
             <Logout />
           </ListItemIcon>
-          <ListItemText primary="Logout" />
+          <ListItemText primary="Logout" sx={{ marginRight: 5 }} />
         </ListItemButton>
       </ListItem>
     </List>
