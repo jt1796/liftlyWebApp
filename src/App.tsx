@@ -3,28 +3,42 @@ import { useAuth } from './contexts/AuthContext';
 import LoginPage from './components/LoginPage';
 import ProtectedLayout from './components/ProtectedLayout';
 import NotFoundPage from './components/NotFoundPage';
-import './App.css';
+import { Box, Typography  } from '@mui/material';
+import {
+  createTheme,
+  ThemeProvider,
+  CssBaseline,
+} from '@mui/material';
+
+const theme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
 
 function App() {
   const { currentUser } = useAuth();
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route element={<ProtectedLayout />}>
-          <Route
-            path="/"
-            element={
-              <div>
-                <h1>Welcome, {currentUser?.email}</h1>
-              </div>
-            }
-          />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </Router>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<ProtectedLayout />}>
+            <Route
+              path="/"
+              element={
+                <Box>
+                  <Typography>Welcome, {currentUser?.email}</Typography>
+                </Box>
+              }
+            />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 
