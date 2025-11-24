@@ -31,7 +31,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
   );
 
   return (
-    mobileOpen ?
+    <>
       <Drawer
         variant="temporary"
         open={mobileOpen}
@@ -45,17 +45,17 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
       >
         {drawerContent}
       </Drawer>
-      :
       <Drawer
         variant="permanent"
         sx={{
           display: { xs: 'none', sm: 'block' },
-          width: 200,
+          width: 220,
         }}
         open
       >
         {drawerContent}
       </Drawer>
+    </>
   );
 };
 
