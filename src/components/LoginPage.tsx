@@ -1,10 +1,11 @@
-
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation, Navigate } from 'react-router-dom';
 
 const LoginPage = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser } = useAuth();
+  const location = useLocation();
 
   const handleSignIn = async () => {
     try {
@@ -14,19 +15,9 @@ const LoginPage = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   if (currentUser) {
-    return <div>
-      <h1>Welcome {currentUser.email}</h1>
-      <button onClick={handleLogout}>Logout</button>
-    </div>
+    const from = location.state?.from?.pathname || "/";
+    return <Navigate to={from} replace />;
   }
 
   return (
