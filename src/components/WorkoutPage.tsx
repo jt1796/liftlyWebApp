@@ -162,6 +162,7 @@ const WorkoutPage: React.FC = () => {
                     label="Weight"
                     value={set.weight}
                     sx={{ width: '100px' }}
+                    onFocus={e => e.target.select()}
                     onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseInt(e.target.value))}
                   />
                   <TextField
@@ -169,6 +170,7 @@ const WorkoutPage: React.FC = () => {
                     label="Reps"
                     value={set.reps}
                     sx={{ width: '100px' }}
+                    onFocus={e => e.target.select()}
                     onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
                   />
                   <Typography variant="body2" sx={{ minWidth: '80px', textAlign: 'center' }}>
