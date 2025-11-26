@@ -21,7 +21,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
   const drawerContent = (
     <List>
       <ListItem disablePadding>
-        <ListItemButton component={Link} to="/workout">
+        <ListItemButton component={Link} to="/workout" onClick={handleDrawerToggle}>
           <ListItemIcon>
             <FitnessCenter />
           </ListItemIcon>
@@ -29,7 +29,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
-        <ListItemButton onClick={logout}>
+        <ListItemButton onClick={() => { logout(); handleDrawerToggle(); }}>
           <ListItemIcon>
             <Logout />
           </ListItemIcon>
