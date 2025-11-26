@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context-utils';
 import { useState } from 'react';
 import { Box, CssBaseline, Toolbar } from '@mui/material';
 import Sidebar from './layout/Sidebar';

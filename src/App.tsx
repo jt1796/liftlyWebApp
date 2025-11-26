@@ -1,8 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './contexts/auth-context-utils';
 import LoginPage from './components/LoginPage';
 import ProtectedLayout from './components/ProtectedLayout';
 import NotFoundPage from './components/NotFoundPage';
+import WorkoutPage from './components/WorkoutPage';
 import { Box, Typography  } from '@mui/material';
 import {
   createTheme,
@@ -34,6 +35,8 @@ function App() {
                 </Box>
               }
             />
+            <Route path="/workout" element={<WorkoutPage />} />
+            <Route path="/workout/:id" element={<WorkoutPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

@@ -1,6 +1,6 @@
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/auth-context-utils';
 import { useLocation, Navigate } from 'react-router-dom';
 
 const LoginPage = () => {

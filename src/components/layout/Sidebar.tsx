@@ -6,8 +6,9 @@ import {
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import { Logout } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { Logout, FitnessCenter } from '@mui/icons-material';
+import { useAuth } from '../../contexts/auth-context-utils';
+import { Link } from 'react-router-dom';
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -19,6 +20,14 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
 
   const drawerContent = (
     <List>
+      <ListItem disablePadding>
+        <ListItemButton component={Link} to="/workout">
+          <ListItemIcon>
+            <FitnessCenter />
+          </ListItemIcon>
+          <ListItemText primary="New Workout" sx={{ marginRight: 5 }} />
+        </ListItemButton>
+      </ListItem>
       <ListItem disablePadding>
         <ListItemButton onClick={logout}>
           <ListItemIcon>
