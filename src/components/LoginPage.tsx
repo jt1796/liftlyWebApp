@@ -1,3 +1,4 @@
+import { Container, Typography, Button } from '@mui/material';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 import { useAuth } from '../contexts/auth-context-utils';
@@ -21,10 +22,21 @@ const LoginPage = () => {
   }
 
   return (
-    <div>
-      <h1>Welcome to Liftly</h1>
-      <button onClick={handleSignIn}>Sign in with Google</button>
-    </div>
+    <Container
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        paddingLeft: '1rem',
+      }}
+    >
+      <Typography variant="h4" component="h1" gutterBottom>
+        Welcome to Liftly
+      </Typography>
+      <Button variant="contained" onClick={handleSignIn}>Sign in with Google</Button>
+    </Container>
   );
 };
 
