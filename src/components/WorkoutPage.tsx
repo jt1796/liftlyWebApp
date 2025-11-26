@@ -19,6 +19,9 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { calculateOneRepMax } from '../utils/workoutUtils';
+import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 const WorkoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -130,16 +133,13 @@ const WorkoutPage: React.FC = () => {
           value={workout.name}
           onChange={(e) => setWorkout({ ...workout, name: e.target.value })}
         />
-        <TextField
-          label="Date"
-          type="date"
-          fullWidth
-          value={workout.date.toISOString().split('T')[0]}
-          onChange={(e) => setWorkout({ ...workout, date: new Date(e.target.value) })}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateTimePicker
+            label="Date"
+            value={dayjs(workout.date)}
+            onChange={(e) => e && setWorkout({ ...workout, date: e.toDate() })}
+          />
+        </LocalizationProvider>
       </Stack>
 
       {workout.exercises.map((exercise, exerciseIndex) => (
