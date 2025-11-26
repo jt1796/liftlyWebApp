@@ -86,6 +86,12 @@ const WorkoutPage: React.FC = () => {
     if (!workout) return;
     const newExercises = [...workout.exercises];
     const newSet: Set = { weight: 0, reps: 0 };
+
+    const exerciseSets = newExercises[exerciseIndex].sets;
+    if (exerciseSets.length > 0) {
+      newSet.weight = exerciseSets[exerciseSets.length - 1].weight;
+    }
+
     newExercises[exerciseIndex].sets.push(newSet);
     setWorkout({ ...workout, exercises: newExercises });
   };
