@@ -153,7 +153,7 @@ const WorkoutPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-              <IconButton onClick={() => removeExercise(exerciseIndex)} color="error">
+              <IconButton onClick={() => removeExercise(exerciseIndex)} color="error" size="small">
                 <DeleteIcon />
               </IconButton>
             </Stack>
