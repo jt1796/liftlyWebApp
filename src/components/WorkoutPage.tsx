@@ -20,6 +20,7 @@ import {
   Stack,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { calculateOneRepMax } from '../utils/workoutUtils';
 
 const WorkoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -159,21 +160,26 @@ const WorkoutPage: React.FC = () => {
             </Stack>
 
             {exercise.sets.map((set, setIndex) => (
-              <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={setIndex}>
-                <TextField
-                  type="number"
-                  label="Weight"
-                  fullWidth
-                  value={set.weight}
-                  onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseInt(e.target.value))}
-                />
-                <TextField
-                  type="number"
-                  label="Reps"
-                  fullWidth
-                  value={set.reps}
-                  onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
-                />
+              <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={setIndex} justifyContent="space-between">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <TextField
+                    type="number"
+                    label="Weight"
+                    value={set.weight}
+                    sx={{ width: '100px' }}
+                    onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseInt(e.target.value))}
+                  />
+                  <TextField
+                    type="number"
+                    label="Reps"
+                    value={set.reps}
+                    sx={{ width: '100px' }}
+                    onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
+                  />
+                  <Typography variant="body2" sx={{ minWidth: '80px', textAlign: 'center' }}>
+                    1RM: {calculateOneRepMax(set.weight, set.reps)}
+                  </Typography>
+                </Box>
                 <IconButton onClick={() => removeSet(exerciseIndex, setIndex)} color="error" size="small">
                   <DeleteIcon />
                 </IconButton>
