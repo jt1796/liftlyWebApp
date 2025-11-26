@@ -17,7 +17,7 @@ const LoginPage = () => {
   };
 
   if (currentUser) {
-    const from = location.state?.from?.pathname || "/";
+    const from = location.state?.from?.pathname || '/';
     return <Navigate to={from} replace />;
   }
 
