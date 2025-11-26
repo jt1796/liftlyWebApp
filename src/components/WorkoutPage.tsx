@@ -11,13 +11,11 @@ import {
   CardContent,
   CardActions,
   IconButton,
-  Select,
-  MenuItem,
   FormControl,
-  InputLabel,
   Box,
   CircularProgress,
   Stack,
+  Autocomplete,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { calculateOneRepMax } from '../utils/workoutUtils';
@@ -143,16 +141,13 @@ const WorkoutPage: React.FC = () => {
           <CardContent>
             <Stack direction="row" spacing={2} alignItems="center">
               <FormControl fullWidth>
-                <InputLabel>Exercise</InputLabel>
-                <Select
+                <Autocomplete
+                  disablePortal
                   value={exercise.name}
-                  onChange={(e) => handleExerciseChange(exerciseIndex, 'name', e.target.value)}
-                  label="Exercise"
-                >
-                  {exerciseList.map((name) => (
-                    <MenuItem key={name} value={name}>{name}</MenuItem>
-                  ))}
-                </Select>
+                  options={exerciseList}
+                  onChange={(_, value) => handleExerciseChange(exerciseIndex, 'name', value!)}
+                  renderInput={(params) => <TextField {...params} label="Exercise" />}
+                />
               </FormControl>
               <IconButton onClick={() => removeExercise(exerciseIndex)} color="error" size="small">
                 <DeleteIcon />
