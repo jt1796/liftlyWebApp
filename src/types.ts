@@ -10,7 +10,6 @@ export interface Exercise {
 
 export interface Workout {
   id?: string;
-  name: string;
   date: Date;
   exercises: Exercise[];
 }

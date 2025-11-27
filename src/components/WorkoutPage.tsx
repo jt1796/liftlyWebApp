@@ -56,7 +56,6 @@ const WorkoutPage: React.FC = () => {
       setTimeout(() => {
         setWorkout({
           id,
-          name: 'Morning Workout',
           date: new Date(),
           exercises: [
             {
@@ -145,12 +144,6 @@ const WorkoutPage: React.FC = () => {
         {id ? 'Edit Workout' : 'Create Workout'}
       </Typography>
       <Stack spacing={3} sx={{ mb: 3 }}>
-        <TextField
-          label="Workout Name"
-          fullWidth
-          value={workout.name}
-          onChange={(e) => setWorkout({ ...workout, name: e.target.value })}
-        />
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateTimePicker
             label="Date"
