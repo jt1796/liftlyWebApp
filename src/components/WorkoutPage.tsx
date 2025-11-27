@@ -22,11 +22,15 @@ import { calculateOneRepMax } from '../utils/workoutUtils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import { db } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { useAuth } from '../contexts/auth-context-utils';
 
 const localStorageKey = 'liftly-currentWorkout';
 
 const WorkoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { currentUser } = useAuth();
   const [workout, setWorkout] = useState<Workout | null>(() => {
     // Initialize with a new workout if no ID is provided
     if (!id) {
@@ -49,6 +53,7 @@ const WorkoutPage: React.FC = () => {
     }
     return null; // Will be set by useEffect if ID exists
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -76,6 +81,30 @@ const WorkoutPage: React.FC = () => {
       localStorage.setItem(localStorageKey, JSON.stringify(workout));
     }
   }, [workout]);
+
+  const handleSaveWorkout = async () => {
+    if (!currentUser || !workout) {
+      console.error('User not logged in or workout data is missing.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const workoutData = {
+        ...workout,
+        userId: currentUser.uid,
+      };
+
+      await addDoc(collection(db, 'workouts'), workoutData);
+      localStorage.removeItem(localStorageKey);
+      setWorkout(null);
+      // TODO: redirect to /workout/id
+    } catch (error) {
+      console.error('Error saving workout:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string) => {
     if (!workout) return;
@@ -211,7 +240,9 @@ const WorkoutPage: React.FC = () => {
       </Box>
 
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
-        <Button variant="contained" color="primary">Save Workout</Button>
+        <Button variant="contained" color="primary" onClick={handleSaveWorkout} disabled={isSaving}>
+          {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save Workout'}
+        </Button>
       </Box>
     </Container>
   );
