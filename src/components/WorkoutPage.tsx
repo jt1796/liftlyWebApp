@@ -24,7 +24,7 @@ import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/auth-context-utils';
 import { useQuery } from '@tanstack/react-query';
 
@@ -94,11 +94,15 @@ const WorkoutPage: React.FC = () => {
         userId: currentUser.uid,
       };
 
-      const res = await addDoc(collection(db, 'workouts'), workoutData);
-      if (!id) {
+      if (id) {
+        const workoutDocRef = doc(db, 'workouts', id);
+        await setDoc(workoutDocRef, workoutData);
+        navigate(`/workout/${id}`);
+      } else {
+        const res = await addDoc(collection(db, 'workouts'), workoutData);
         localStorage.removeItem(localStorageKey);
+        navigate(`/workout/${res.id}`);
       }
-      navigate(`/workout/${res.id}`);
     } catch (error) {
       console.error('Error saving workout:', error);
       navigate('/error');
