@@ -9,7 +9,7 @@ export interface Exercise {
 }
 
 export interface Workout {
-  id: string;
+  id?: string;
   name: string;
   date: Date;
   exercises: Exercise[];

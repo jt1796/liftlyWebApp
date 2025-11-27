@@ -23,13 +23,25 @@ import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 
+const localStorageKey = 'liftly-currentWorkout';
+
 const WorkoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [workout, setWorkout] = useState<Workout | null>(() => {
     // Initialize with a new workout if no ID is provided
     if (!id) {
+      try {
+        const storedWorkout = localStorage.getItem(localStorageKey);
+        if (storedWorkout) {
+          const parsedWorkout = JSON.parse(storedWorkout);
+          parsedWorkout.date = new Date(parsedWorkout.date);
+          return parsedWorkout as Workout;
+        }
+      } catch (error) {
+        console.error('Failed to parse workout from localStorage', error);
+      }
+
       return {
-        id: Date.now().toString(),
         name: 'New Workout',
         date: new Date(),
         exercises: [],
@@ -59,6 +71,12 @@ const WorkoutPage: React.FC = () => {
       }, 500); // Simulate network delay
     }
   }, [id]);
+
+  useEffect(() => {
+    if (workout) {
+      localStorage.setItem(localStorageKey, JSON.stringify(workout));
+    }
+  }, [workout]);
 
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string) => {
     if (!workout) return;
