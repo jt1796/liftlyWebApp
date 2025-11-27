@@ -228,7 +228,7 @@ const WorkoutPage: React.FC = () => {
                     type="number"
                     label="Weight"
                     value={set.weight}
-                    sx={{ width: '100px' }}
+                    sx={{ maxWidth: '100px' }}
                     onFocus={e => e.target.select()}
                     onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseInt(e.target.value))}
                   />
@@ -236,7 +236,7 @@ const WorkoutPage: React.FC = () => {
                     type="number"
                     label="Reps"
                     value={set.reps}
-                    sx={{ width: '100px' }}
+                    sx={{ maxWidth: '100px' }}
                     onFocus={e => e.target.select()}
                     onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
                   />
