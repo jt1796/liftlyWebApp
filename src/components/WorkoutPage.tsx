@@ -17,6 +17,7 @@ import {
   Stack,
   Autocomplete,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { calculateOneRepMax, getWorkoutById } from '../utils/workoutUtils';
@@ -37,6 +38,9 @@ const WorkoutPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
   const {
     data: fetchedWorkout,
@@ -100,7 +104,9 @@ const WorkoutPage: React.FC = () => {
       navigate('/workouts');
     } catch (error) {
       console.error('Error deleting workout:', error);
-      navigate('/error');
+      setSnackbarMessage('Error saving workout.');
+      setSnackbarSeverity('error');
+      setShowSnackbar(true);
     } finally {
       setIsSaving(false);
     }
@@ -125,18 +131,31 @@ const WorkoutPage: React.FC = () => {
         await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
         await queryClient.invalidateQueries({ queryKey: ['workout', id] });
         navigate(`/workout/${id}`);
+        setSnackbarMessage('Workout updated successfully!');
       } else {
         const res = await addDoc(collection(db, 'workouts'), workoutData);
         await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
         localStorage.removeItem(localStorageKey);
         navigate(`/workout/${res.id}`);
+        setSnackbarMessage('Workout created successfully!');
       }
+      setSnackbarSeverity('success');
+      setShowSnackbar(true);
     } catch (error) {
       console.error('Error saving workout:', error);
-      navigate('/error');
+      setSnackbarMessage('Error saving workout.');
+      setSnackbarSeverity('error');
+      setShowSnackbar(true);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCloseSnackbar = (_event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setShowSnackbar(false);
   };
 
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string) => {
@@ -298,6 +317,11 @@ const WorkoutPage: React.FC = () => {
           {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save Workout'}
         </Button>
       </Box>
+      <Snackbar open={showSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
