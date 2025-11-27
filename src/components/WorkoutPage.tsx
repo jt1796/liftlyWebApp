@@ -24,7 +24,7 @@ import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { db } from '../firebase';
-import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/auth-context-utils';
 import { useQuery } from '@tanstack/react-query';
 
@@ -80,6 +80,29 @@ const WorkoutPage: React.FC = () => {
       localStorage.setItem(localStorageKey, JSON.stringify(workout));
     }
   }, [workout, id]);
+
+  const handleDeleteWorkout = async () => {
+    if (!currentUser || !id) {
+      console.error('User not logged in or workout ID is missing.');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this workout?')) {
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const workoutDocRef = doc(db, 'workouts', id);
+      await deleteDoc(workoutDocRef);
+      navigate('/workouts');
+    } catch (error) {
+      console.error('Error deleting workout:', error);
+      navigate('/error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleSaveWorkout = async () => {
     if (!currentUser || !workout) {
@@ -260,7 +283,12 @@ const WorkoutPage: React.FC = () => {
         <Button onClick={addExercise} variant="outlined">Add Exercise</Button>
       </Box>
 
-      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
+      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+        {id && (
+          <Button variant="outlined" color="error" onClick={handleDeleteWorkout} disabled={isSaving} startIcon={<DeleteIcon />}>
+            Delete Workout
+          </Button>
+        )}
         <Button variant="contained" color="primary" onClick={handleSaveWorkout} disabled={isSaving}>
           {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save Workout'}
         </Button>
