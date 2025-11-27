@@ -30,7 +30,6 @@ const ProtectedLayout = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
         }}
       >
         <Toolbar sx={{ display: {sm: 'none'} }}/>
