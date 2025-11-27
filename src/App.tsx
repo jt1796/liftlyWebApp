@@ -4,6 +4,7 @@ import LoginPage from './components/LoginPage';
 import ProtectedLayout from './components/ProtectedLayout';
 import NotFoundPage from './components/NotFoundPage';
 import WorkoutPage from './components/WorkoutPage';
+import ErrorPage from './components/ErrorPage';
 import { Box, Typography  } from '@mui/material';
 import {
   createTheme,
@@ -26,6 +27,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/error" element={<ErrorPage />} />
           <Route element={<ProtectedLayout />}>
             <Route
               path="/"

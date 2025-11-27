@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import type { Workout, Exercise, Set } from '../types';
 import { exercises as exerciseList } from '../data/exercises';
 import {
@@ -23,16 +23,20 @@ import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../contexts/auth-context-utils';
 
 const localStorageKey = 'liftly-currentWorkout';
 
+type FetchedWorkout = Omit<Workout, 'date'> & {
+  date: Timestamp;
+};
+
 const WorkoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [workout, setWorkout] = useState<Workout | null>(() => {
-    // Initialize with a new workout if no ID is provided
     if (!id) {
       try {
         const storedWorkout = localStorage.getItem(localStorageKey);
@@ -46,35 +50,40 @@ const WorkoutPage: React.FC = () => {
       }
 
       return {
-        name: 'New Workout',
         date: new Date(),
         exercises: [],
       };
     }
-    return null; // Will be set by useEffect if ID exists
+    return null;
   });
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      // Simulate an async fetch
-      setTimeout(() => {
-        setWorkout({
-          id,
-          date: new Date(),
-          exercises: [
-            {
-              name: 'Squat',
-              sets: [
-                { weight: 100, reps: 10 },
-                { weight: 100, reps: 10 },
-              ],
-            },
-          ],
-        });
-      }, 500); // Simulate network delay
-    }
-  }, [id]);
+    const fetchWorkout = async () => {
+      if (id) {
+        try {
+          const docRef = doc(db, 'workouts', id);
+          const docSnap = await getDoc(docRef);
+
+          if (docSnap.exists()) {
+            const fetchedWorkout = docSnap.data() as FetchedWorkout;
+            const workout: Workout = {
+              ...fetchedWorkout,
+              date: fetchedWorkout.date.toDate(),
+            };
+            setWorkout(workout);
+          } else {
+            navigate('/404');
+          }
+        } catch (error) {
+          console.error('Error fetching workout:', error);
+          navigate('/error');
+        }
+      }
+    };
+
+    fetchWorkout();
+  }, [id, navigate]);
 
   useEffect(() => {
     if (workout) {
@@ -95,12 +104,12 @@ const WorkoutPage: React.FC = () => {
         userId: currentUser.uid,
       };
 
-      await addDoc(collection(db, 'workouts'), workoutData);
+      const res = await addDoc(collection(db, 'workouts'), workoutData);
       localStorage.removeItem(localStorageKey);
-      setWorkout(null);
-      // TODO: redirect to /workout/id
+      navigate(`/workout/${res.id}`);
     } catch (error) {
       console.error('Error saving workout:', error);
+      navigate('/error');
     } finally {
       setIsSaving(false);
     }

@@ -15,6 +15,7 @@ Liftly is a web application designed for tracking workouts. It allows users to c
 *   **Build Tool:** Vite
 *   **Backend:** Firebase (Authentication)
 *   **Linting:** ESLint
+*   **Database:** Firestore
 
 ## Project Structure
 
