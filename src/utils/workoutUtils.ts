@@ -17,8 +17,8 @@ export const getWorkoutsForUser = async (userId: string): Promise<Workout[]> => 
   querySnapshot.forEach((doc) => {
     const data = doc.data();
     workouts.push({
-      id: doc.id,
       ...data,
+      id: doc.id,
       date: (data.date as Timestamp).toDate(),
     } as Workout);
   });

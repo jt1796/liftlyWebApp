@@ -26,7 +26,7 @@ import dayjs from 'dayjs';
 import { db } from '../firebase';
 import { collection, addDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/auth-context-utils';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const localStorageKey = 'liftly-currentWorkout';
 
@@ -34,6 +34,7 @@ const WorkoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -95,6 +96,7 @@ const WorkoutPage: React.FC = () => {
       setIsSaving(true);
       const workoutDocRef = doc(db, 'workouts', id);
       await deleteDoc(workoutDocRef);
+      await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
       navigate('/workouts');
     } catch (error) {
       console.error('Error deleting workout:', error);
@@ -120,9 +122,12 @@ const WorkoutPage: React.FC = () => {
       if (id) {
         const workoutDocRef = doc(db, 'workouts', id);
         await setDoc(workoutDocRef, workoutData);
+        await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
+        await queryClient.invalidateQueries({ queryKey: ['workout', id] });
         navigate(`/workout/${id}`);
       } else {
         const res = await addDoc(collection(db, 'workouts'), workoutData);
+        await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
         localStorage.removeItem(localStorageKey);
         navigate(`/workout/${res.id}`);
       }
