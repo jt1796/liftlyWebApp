@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Workout } from '../types';
 
@@ -23,4 +23,20 @@ export const getWorkoutsForUser = async (userId: string): Promise<Workout[]> => 
     } as Workout);
   });
   return workouts;
+};
+
+export const getWorkoutById = async (id: string): Promise<Workout | null> => {
+  const docRef = doc(db, 'workouts', id);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      ...data,
+      date: (data.date as Timestamp).toDate(),
+    } as Workout;
+  } else {
+    return null;
+  }
 };

@@ -16,80 +16,70 @@ import {
   CircularProgress,
   Stack,
   Autocomplete,
+  Alert,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { calculateOneRepMax } from '../utils/workoutUtils';
+import { calculateOneRepMax, getWorkoutById } from '../utils/workoutUtils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { db } from '../firebase';
-import { collection, addDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/auth-context-utils';
+import { useQuery } from '@tanstack/react-query';
 
 const localStorageKey = 'liftly-currentWorkout';
-
-type FetchedWorkout = Omit<Workout, 'date'> & {
-  date: Timestamp;
-};
 
 const WorkoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const [workout, setWorkout] = useState<Workout | null>(() => {
-    if (!id) {
+  const [workout, setWorkout] = useState<Workout | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const {
+    data: fetchedWorkout,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['workout', id],
+    queryFn: () => getWorkoutById(id!),
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (id) {
+      if (fetchedWorkout) {
+        setWorkout(fetchedWorkout);
+      }
+    } else {
       try {
         const storedWorkout = localStorage.getItem(localStorageKey);
         if (storedWorkout) {
           const parsedWorkout = JSON.parse(storedWorkout);
           parsedWorkout.date = new Date(parsedWorkout.date);
-          return parsedWorkout as Workout;
+          setWorkout(parsedWorkout as Workout);
+        } else {
+          setWorkout({
+            date: new Date(),
+            exercises: [],
+          });
         }
       } catch (error) {
         console.error('Failed to parse workout from localStorage', error);
+        setWorkout({
+          date: new Date(),
+          exercises: [],
+        });
       }
-
-      return {
-        date: new Date(),
-        exercises: [],
-      };
     }
-    return null;
-  });
-  const [isSaving, setIsSaving] = useState(false);
+  }, [id, fetchedWorkout]);
 
   useEffect(() => {
-    const fetchWorkout = async () => {
-      if (id) {
-        try {
-          const docRef = doc(db, 'workouts', id);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            const fetchedWorkout = docSnap.data() as FetchedWorkout;
-            const workout: Workout = {
-              ...fetchedWorkout,
-              date: fetchedWorkout.date.toDate(),
-            };
-            setWorkout(workout);
-          } else {
-            navigate('/404');
-          }
-        } catch (error) {
-          console.error('Error fetching workout:', error);
-          navigate('/error');
-        }
-      }
-    };
-
-    fetchWorkout();
-  }, [id, navigate]);
-
-  useEffect(() => {
-    if (workout) {
+    if (workout && !id) {
       localStorage.setItem(localStorageKey, JSON.stringify(workout));
     }
-  }, [workout]);
+  }, [workout, id]);
 
   const handleSaveWorkout = async () => {
     if (!currentUser || !workout) {
@@ -105,7 +95,9 @@ const WorkoutPage: React.FC = () => {
       };
 
       const res = await addDoc(collection(db, 'workouts'), workoutData);
-      localStorage.removeItem(localStorageKey);
+      if (!id) {
+        localStorage.removeItem(localStorageKey);
+      }
       navigate(`/workout/${res.id}`);
     } catch (error) {
       console.error('Error saving workout:', error);
@@ -167,6 +159,22 @@ const WorkoutPage: React.FC = () => {
     newExercises.splice(exerciseIndex, 1);
     setWorkout({ ...workout, exercises: newExercises });
   };
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Alert severity="error">{(error as Error).message}</Alert>
+      </Container>
+    );
+  }
 
   if (!workout) {
     return (
