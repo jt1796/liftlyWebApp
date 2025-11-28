@@ -20,6 +20,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { calculateOneRepMax, getWorkoutById } from '../utils/workoutUtils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -158,6 +159,35 @@ const WorkoutPage: React.FC = () => {
     setShowSnackbar(false);
   };
 
+  const handleCopyWorkout = () => {
+    if (!workout) return;
+
+    const workoutText = `Workout on ${dayjs(workout.date).format('MMMM D, YYYY')}
+
+${workout.exercises
+  .map(
+    (exercise) =>
+      `${exercise.name}
+${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
+  )
+  .join('\n\n')}
+`;
+
+    navigator.clipboard.writeText(workoutText).then(
+      () => {
+        setSnackbarMessage('Workout copied to clipboard!');
+        setSnackbarSeverity('success');
+        setShowSnackbar(true);
+      },
+      (err) => {
+        console.error('Failed to copy workout: ', err);
+        setSnackbarMessage('Failed to copy workout.');
+        setSnackbarSeverity('error');
+        setShowSnackbar(true);
+      }
+    );
+  };
+
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string) => {
     if (!workout) return;
     const newExercises = [...workout.exercises];
@@ -237,9 +267,14 @@ const WorkoutPage: React.FC = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {id ? 'Edit Workout' : 'Create Workout'}
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          {id ? 'Edit Workout' : 'Create Workout'}
+        </Typography>
+        <IconButton onClick={handleCopyWorkout} color="primary">
+          <ContentCopyIcon />
+        </IconButton>
+      </Box>
       <Stack spacing={3} sx={{ mb: 3 }}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateTimePicker
