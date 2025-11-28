@@ -6,9 +6,12 @@ This document provides a high-level overview of the Liftly web application, its 
 
 Liftly is a web application designed for tracking workouts. It allows users to create, edit, and view their workout sessions. The application uses Firebase for authentication and is built with React and Material-UI.
 
+The application will have access to the users workout history, and can use this to provide hints to the user for creating the next workouts. As well as tracking progress
+
 ## Technologies Used
 
 *   **Frontend Framework:** React
+*   **Frontend State Management** React query
 *   **Language:** TypeScript
 *   **UI Library:** Material-UI
 *   **Routing:** React Router
@@ -26,6 +29,7 @@ The project follows a standard React application structure:
     *   `components/`: Contains reusable React components.
         *   `LoginPage.tsx`: Handles user authentication.
         *   `WorkoutPage.tsx`: Core component for creating and editing workouts.
+        *   `WorkoutListPage.tsx`: A component for listing workouts
         *   `ProtectedLayout.tsx`: A component that guards routes that require authentication.
     *   `contexts/`: Contains React contexts, such as for authentication.
     *   `data/`: Contains static data, such as the list of exercises.
