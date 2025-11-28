@@ -9,4 +9,5 @@ export const exercises = [
   'Dip',
   'Push Up',
   'Lunges',
+  'DB hammers (forearm)',
 ];
