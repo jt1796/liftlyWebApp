@@ -2,12 +2,49 @@ import { collection, query, where, getDocs, Timestamp, doc, getDoc } from 'fireb
 import { db } from '../firebase';
 import type { Workout } from '../types';
 
-export const calculateOneRepMax = (weight: number, reps: number): number => {
-  if (reps <= 1) {
+export const calculateOneRepMax = (weight: number, reps: number) => {
+  if (reps === 0) {
+    return 0;
+  }
+  if (reps === 1) {
     return weight;
   }
+
   return Math.round(weight * (1 + reps / 30));
 };
+
+export const findSetToPR = (targetE1RM: number) => {
+  let bestWeight = 0;
+  let bestReps = 0;
+  let smallestDifference = Infinity;
+
+  for (let reps = 3; reps <= 20; reps++) {
+    let requiredWeight = Math.ceil(targetE1RM / (1 + reps / 30));
+    requiredWeight = Math.ceil(requiredWeight / 5) * 5;
+
+    let currentE1RM = calculateOneRepMax(requiredWeight, reps);
+
+    if (currentE1RM <= targetE1RM) {
+      requiredWeight += 5;
+      currentE1RM = calculateOneRepMax(requiredWeight, reps);
+    }
+
+    const difference = currentE1RM - targetE1RM;
+
+    if (difference > 0 && difference < smallestDifference) {
+      smallestDifference = difference;
+      bestWeight = requiredWeight;
+      bestReps = reps;
+    }
+  }
+
+  if (bestReps === 0) {
+    return null;
+  }
+
+  return { weight: bestWeight, reps: bestReps };
+};
+
 
 export const getWorkoutsForUser = async (userId: string): Promise<Workout[]> => {
   const workoutsCol = collection(db, 'workouts');
