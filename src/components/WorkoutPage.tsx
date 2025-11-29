@@ -21,7 +21,8 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { calculateOneRepMax, getWorkoutById } from '../utils/workoutUtils';
+import { getWorkoutById, calculateOneRepMax } from '../utils/workoutUtils';
+import { getCustomExercises } from '../utils/customExerciseUtils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -29,6 +30,7 @@ import { db } from '../firebase';
 import { collection, addDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/auth-context-utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { CustomExercise } from '../types';
 
 const localStorageKey = 'liftly-currentWorkout';
 
@@ -52,6 +54,18 @@ const WorkoutPage: React.FC = () => {
     queryFn: () => getWorkoutById(id!),
     enabled: !!id,
   });
+
+  const { data: customExercises = [] } = useQuery({
+    queryKey: ['custom-exercises', currentUser?.uid],
+    queryFn: () => getCustomExercises(currentUser!.uid),
+    enabled: !!currentUser,
+  });
+
+  const combinedExercises = [
+    ...exerciseList,
+    ...customExercises.map((ex: CustomExercise) => ex.name),
+  ];
+
 
   useEffect(() => {
     if (id) {
@@ -207,7 +221,7 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
   const addExercise = () => {
     if (!workout) return;
     const newExercise: Exercise = {
-      name: exerciseList[0],
+      name: combinedExercises[0],
       sets: [{ weight: 0, reps: 0 }],
     };
     setWorkout({ ...workout, exercises: [...workout.exercises, newExercise] });
@@ -293,7 +307,7 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
                 <Autocomplete
                   disablePortal
                   value={exercise.name}
-                  options={exerciseList}
+                  options={combinedExercises}
                   onChange={(_, value) => handleExerciseChange(exerciseIndex, 'name', value!)}
                   renderInput={(params) => <TextField {...params} label="Exercise" />}
                 />

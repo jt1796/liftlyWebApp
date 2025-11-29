@@ -29,11 +29,13 @@ The project follows a standard React application structure:
     *   `utils/`: Contains some non-framework code
         *   `exerciseUtils`: Function for computing records from workout list.
         *   `workoutUtils`: Database calls to get a workout/list of workouts.
+        *   `customExerciseUtils.ts`: Database calls for managing custom exercises.
     *   `components/`: Contains reusable React components.
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
         *   `LoginPage.tsx`: Handles user authentication.
         *   `WorkoutPage.tsx`: Core component for creating and editing workouts.
         *   `WorkoutListPage.tsx`: A component for listing workouts
+        *   `ExercisesPage.tsx`: A component for managing custom exercises.
         *   `ProtectedLayout.tsx`: A component that guards routes that require authentication.
     *   `contexts/`: Contains React contexts, such as for authentication.
     *   `data/`: Contains static data, such as the list of exercises.

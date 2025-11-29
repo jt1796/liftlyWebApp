@@ -14,5 +14,9 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId && isAllowedUser();
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId && isAllowedUser();
     }
+
+    match /customExercises/{userId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == userId && isAllowedUser();
+    }
   }
 }

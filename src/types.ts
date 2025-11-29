@@ -13,3 +13,7 @@ export interface Workout {
   date: Date;
   exercises: Exercise[];
 }
+
+export interface CustomExercise {
+  name: string;
+}
