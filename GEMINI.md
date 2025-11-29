@@ -26,7 +26,11 @@ The project follows a standard React application structure:
 
 *   `public/`: Contains static assets like `index.html` and icons.
 *   `src/`: Contains the main application source code.
+    *   `utils/`: Contains some non-framework code
+        *   `exerciseUtils`: Function for computing records from workout list.
+        *   `workoutUtils`: Database calls to get a workout/list of workouts.
     *   `components/`: Contains reusable React components.
+        *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
         *   `LoginPage.tsx`: Handles user authentication.
         *   `WorkoutPage.tsx`: Core component for creating and editing workouts.
         *   `WorkoutListPage.tsx`: A component for listing workouts

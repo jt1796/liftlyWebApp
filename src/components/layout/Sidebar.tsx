@@ -29,11 +29,11 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
-        <ListItemButton component={Link} to="/exercises" onClick={handleDrawerToggle}>
+        <ListItemButton component={Link} to="/records" onClick={handleDrawerToggle}>
           <ListItemIcon>
             <QueryStats />
           </ListItemIcon>
-          <ListItemText primary="Exercises" sx={{ marginRight: 5 }} />
+          <ListItemText primary="Records" sx={{ marginRight: 5 }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>

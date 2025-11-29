@@ -18,7 +18,7 @@ import {
   type ExerciseDataPoint,
 } from '../utils/exerciseUtils';
 
-const ExercisePage = () => {
+const RecordsPage = () => {
   const { currentUser } = useAuth();
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
@@ -52,9 +52,6 @@ const ExercisePage = () => {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Exercise Metrics
-      </Typography>
       <FormControl fullWidth sx={{ mb: 4 }}>
         <Autocomplete
           disablePortal
@@ -118,4 +115,4 @@ const ExercisePage = () => {
   );
 };
 
-export default ExercisePage;
+export default RecordsPage;
