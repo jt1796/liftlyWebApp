@@ -33,6 +33,7 @@ export const exercises = [
   'French press',
 
   'Bench Press',
+  'Close grip bench press',
   'Incline bench press',
   'Overhead Press OHP',
   'Push press',
@@ -55,6 +56,8 @@ export const exercises = [
   'Generic lying ham leg curl machine',
   'Generic row machine',
   'Generic lat pulldown machine',
+  'Generic seated calf machine (sitting)',
+  'Generic seated calf machine',
 
   'Pull Up',
   'Chin Up',
