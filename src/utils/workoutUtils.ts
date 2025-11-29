@@ -1,6 +1,7 @@
 import { collection, query, where, getDocs, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Workout } from '../types';
+import dayjs from 'dayjs';
 
 export const calculateOneRepMax = (weight: number, reps: number) => {
   if (reps === 0) {
@@ -76,4 +77,36 @@ export const getWorkoutById = async (id: string): Promise<Workout | null> => {
   } else {
     return null;
   }
+};
+
+export const getE1RmSuggestions = async (userId: string, currentWorkout: Workout): Promise<Record<string, number>> => {
+  const allWorkouts = await getWorkoutsForUser(userId);
+
+  const threeMonthsAgo = dayjs().subtract(3, 'month');
+  const recentWorkouts = allWorkouts.filter((w) => dayjs(w.date).isAfter(threeMonthsAgo));
+
+  const newE1RMSuggestions: Record<string, number> = {};
+
+  for (const exercise of currentWorkout.exercises) {
+    let maxE1RMForExercise = 0;
+
+    for (const pastWorkout of recentWorkouts) {
+      const matchingPastExercise = pastWorkout.exercises.find(
+        (e) => e.name === exercise.name
+      );
+
+      if (matchingPastExercise) {
+        for (const set of matchingPastExercise.sets) {
+          const e1rm = calculateOneRepMax(set.weight, set.reps);
+          if (e1rm > maxE1RMForExercise) {
+            maxE1RMForExercise = e1rm;
+          }
+        }
+      }
+    }
+    if (maxE1RMForExercise > 0) {
+      newE1RMSuggestions[exercise.name] = maxE1RMForExercise;
+    }
+  }
+  return newE1RMSuggestions;
 };

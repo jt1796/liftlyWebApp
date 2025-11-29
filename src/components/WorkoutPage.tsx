@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { getWorkoutById, calculateOneRepMax } from '../utils/workoutUtils';
+import { getWorkoutById, calculateOneRepMax, findSetToPR, getE1RmSuggestions } from '../utils/workoutUtils';
 import { getCustomExercises } from '../utils/customExerciseUtils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -44,6 +44,8 @@ const WorkoutPage: React.FC = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [e1rmSuggestions, setE1rmSuggestions] = useState<Record<string, number>>({});
+  const [isE1RMLoading, setIsE1RMLoading] = useState(false);
 
   const {
     data: fetchedWorkout,
@@ -95,11 +97,35 @@ const WorkoutPage: React.FC = () => {
     }
   }, [id, fetchedWorkout]);
 
+
   useEffect(() => {
     if (workout && !id) {
       localStorage.setItem(localStorageKey, JSON.stringify(workout));
     }
   }, [workout, id]);
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!currentUser || !workout) {
+        setE1rmSuggestions({});
+        return;
+      }
+
+      setIsE1RMLoading(true);
+      try {
+        const suggestions = await getE1RmSuggestions(currentUser.uid, workout);
+        setE1rmSuggestions(suggestions);
+      } catch (error) {
+        console.error('Error fetching E1RM suggestions:', error);
+        setE1rmSuggestions({});
+      } finally {
+        setIsE1RMLoading(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, [currentUser, workout]);
+
 
   const handleDeleteWorkout = async () => {
     if (!currentUser || !id) {
@@ -222,7 +248,7 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
     if (!workout) return;
     const newExercise: Exercise = {
       name: combinedExercises[0],
-      sets: [{ weight: 0, reps: 0 }],
+      sets: [],
     };
     setWorkout({ ...workout, exercises: [...workout.exercises, newExercise] });
   };
@@ -253,6 +279,21 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
     const newExercises = [...workout.exercises];
     newExercises.splice(exerciseIndex, 1);
     setWorkout({ ...workout, exercises: newExercises });
+  };
+
+  const handleFeelingLucky = (exerciseIndex: number) => {
+    if (!workout) return;
+    const exerciseName = workout.exercises[exerciseIndex].name;
+    const targetE1RM = e1rmSuggestions[exerciseName];
+
+    if (targetE1RM) {
+      const suggestedSet = findSetToPR(targetE1RM);
+      if (suggestedSet) {
+        const newExercises = [...workout.exercises];
+        newExercises[exerciseIndex].sets.push(suggestedSet);
+        setWorkout({ ...workout, exercises: newExercises });
+      }
+    }
   };
 
   if (isLoading) {
@@ -348,6 +389,16 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
           </CardContent>
           <CardActions>
             <Button onClick={() => addSet(exerciseIndex)} size="small">Add Set</Button>
+            {exercise.sets.length === 0 && e1rmSuggestions[exercise.name] && (
+              <Button
+                onClick={() => handleFeelingLucky(exerciseIndex)}
+                size="small"
+                variant="outlined"
+                disabled={isE1RMLoading}
+              >
+                I'm Feeling Lucky
+              </Button>
+            )}
           </CardActions>
         </Card>
       ))}
