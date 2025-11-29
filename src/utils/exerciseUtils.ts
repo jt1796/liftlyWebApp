@@ -7,6 +7,71 @@ export interface ExerciseDataPoint {
   estimatedOneRepMax: number;
 }
 
+export interface PR {
+  exerciseName: string;
+  date: Date;
+  type: 'E1RM' | 'Max Weight';
+  value: number;
+  oldValue: number | null;
+}
+
+export const calculateAllPRs = (workouts: Workout[]): PR[] => {
+  const sortedWorkouts = workouts
+    .slice()
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const allPRs: PR[] = [];
+  const exercisePRs = new Map<string, { max1RM: number; maxWeight: number }>();
+
+  for (const workout of sortedWorkouts) {
+    for (const exercise of workout.exercises) {
+      const currentPRs = exercisePRs.get(exercise.name) || {
+        max1RM: 0,
+        maxWeight: 0,
+      };
+
+      let maxWeightInExercise = 0;
+      let max1RMInExercise = 0;
+
+      for (const set of exercise.sets) {
+        if (set.weight > maxWeightInExercise) {
+          maxWeightInExercise = set.weight;
+        }
+        const e1rm = calculateOneRepMax(set.weight, set.reps);
+        if (e1rm > max1RMInExercise) {
+          max1RMInExercise = e1rm;
+        }
+      }
+
+      if (maxWeightInExercise > currentPRs.maxWeight) {
+        allPRs.push({
+          exerciseName: exercise.name,
+          date: workout.date,
+          type: 'Max Weight',
+          value: maxWeightInExercise,
+          oldValue: currentPRs.maxWeight === 0 ? null : currentPRs.maxWeight,
+        });
+        currentPRs.maxWeight = maxWeightInExercise;
+      }
+
+      if (max1RMInExercise > currentPRs.max1RM) {
+        allPRs.push({
+          exerciseName: exercise.name,
+          date: workout.date,
+          type: 'E1RM',
+          value: max1RMInExercise,
+          oldValue: currentPRs.max1RM === 0 ? null : currentPRs.max1RM,
+        });
+        currentPRs.max1RM = max1RMInExercise;
+      }
+
+      exercisePRs.set(exercise.name, currentPRs);
+    }
+  }
+
+  return allPRs;
+};
+
 export const calculateExerciseMetrics = (
   workouts: Workout[],
   exerciseName: string

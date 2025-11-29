@@ -8,6 +8,13 @@ import {
   Alert,
   Autocomplete,
   TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery } from '@tanstack/react-query';
@@ -15,8 +22,12 @@ import { getWorkoutsForUser } from '../utils/workoutUtils';
 import { useAuth } from '../contexts/auth-context-utils';
 import {
   calculateExerciseMetrics,
+  calculateAllPRs,
   type ExerciseDataPoint,
+  type PR,
 } from '../utils/exerciseUtils';
+
+type RecentPRsArray = PR[];
 
 const RecordsPage = () => {
   const { currentUser } = useAuth();
@@ -50,8 +61,17 @@ const RecordsPage = () => {
     return [];
   }, [workouts, selectedExercise]);
 
+  const recentPRs: RecentPRsArray = useMemo(() => {
+    if (!workouts) return [];
+    const prs = calculateAllPRs(workouts);
+    return prs.filter((a) => !!a.oldValue).sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 20);
+  }, [workouts]);
+
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Typography variant="h5" gutterBottom>
+        Exercise Metrics
+      </Typography>
       <FormControl fullWidth sx={{ mb: 4 }}>
         <Autocomplete
           disablePortal
@@ -110,6 +130,40 @@ const RecordsPage = () => {
 
       {selectedExercise && !isLoading && exerciseData.length === 0 && (
         <Typography>No data available for this exercise.</Typography>
+      )}
+
+      {!selectedExercise && !!recentPRs.length && (
+        <Box>
+          <Typography variant="h5" gutterBottom>
+            Recent Personal Records
+          </Typography>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Exercise</TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>PR</TableCell>
+                  <TableCell>Old PR</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {recentPRs.map((pr, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{pr.exerciseName}</TableCell>
+                    <TableCell>{pr.date.toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {pr.value} ({pr.type})
+                    </TableCell>
+                    <TableCell>
+                      {pr.oldValue ? `${pr.oldValue}` : 'N/A'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
       )}
     </Container>
   );
