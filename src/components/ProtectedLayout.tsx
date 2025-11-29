@@ -19,7 +19,7 @@ const ProtectedLayout = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection:'row' }}>
+    <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'row' }}>
       <CssBaseline />
       <Header handleDrawerToggle={handleDrawerToggle} />
       <Sidebar
@@ -30,6 +30,7 @@ const ProtectedLayout = () => {
         component="main"
         sx={{
           flexGrow: 1,
+          overflow: 'auto',
         }}
       >
         <Toolbar sx={{ display: {sm: 'none'} }}/>
