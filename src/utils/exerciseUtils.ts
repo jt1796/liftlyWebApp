@@ -72,6 +72,49 @@ export const calculateAllPRs = (workouts: Workout[]): PR[] => {
   return allPRs;
 };
 
+
+export interface LatestExercisePRs {
+  e1rm?: {
+    value: number;
+    date: Date;
+  };
+  maxWeight?: {
+    value: number;
+    date: Date;
+  };
+}
+
+export const getLatestExercisePRs = (
+  workouts: Workout[],
+  exerciseName: string
+): LatestExercisePRs => {
+  const allPRs = calculateAllPRs(workouts);
+
+  const exercisePRs = allPRs.filter((pr) => pr.exerciseName === exerciseName);
+
+  let latestE1RM: { value: number; date: Date } | undefined;
+  let latestMaxWeight: { value: number; date: Date } | undefined;
+
+  // Iterate in reverse to find the latest PRs efficiently
+  for (let i = exercisePRs.length - 1; i >= 0; i--) {
+    const pr = exercisePRs[i];
+    if (pr.type === 'E1RM' && !latestE1RM) {
+      latestE1RM = { value: pr.value, date: pr.date };
+    }
+    if (pr.type === 'Max Weight' && !latestMaxWeight) {
+      latestMaxWeight = { value: pr.value, date: pr.date };
+    }
+    if (latestE1RM && latestMaxWeight) {
+      break; // Found both latest PRs
+    }
+  }
+
+  return {
+    e1rm: latestE1RM,
+    maxWeight: latestMaxWeight,
+  };
+};
+
 export const calculateExerciseMetrics = (
   workouts: Workout[],
   exerciseName: string

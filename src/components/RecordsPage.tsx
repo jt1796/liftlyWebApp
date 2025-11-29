@@ -23,6 +23,8 @@ import { useAuth } from '../contexts/auth-context-utils';
 import {
   calculateExerciseMetrics,
   calculateAllPRs,
+  getLatestExercisePRs,
+  type LatestExercisePRs,
   type ExerciseDataPoint,
   type PR,
 } from '../utils/exerciseUtils';
@@ -59,6 +61,13 @@ const RecordsPage = () => {
       return calculateExerciseMetrics(workouts, selectedExercise);
     }
     return [];
+  }, [workouts, selectedExercise]);
+
+  const latestExercisePRs: LatestExercisePRs = useMemo(() => {
+    if (workouts && selectedExercise) {
+      return getLatestExercisePRs(workouts, selectedExercise);
+    }
+    return {};
   }, [workouts, selectedExercise]);
 
   const recentPRs: RecentPRsArray = useMemo(() => {
@@ -125,6 +134,38 @@ const RecordsPage = () => {
             ]}
             height={300}
           />
+
+          {(latestExercisePRs.e1rm || latestExercisePRs.maxWeight) && (
+            <Box sx={{ mt: 4 }}>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Metric</TableCell>
+                      <TableCell>Value</TableCell>
+                      <TableCell>Date</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {latestExercisePRs.e1rm && (
+                      <TableRow>
+                        <TableCell>Estimated 1RM</TableCell>
+                        <TableCell>{latestExercisePRs.e1rm.value.toFixed(2)}</TableCell>
+                        <TableCell>{latestExercisePRs.e1rm.date.toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    )}
+                    {latestExercisePRs.maxWeight && (
+                      <TableRow>
+                        <TableCell>Most Weight Lifted</TableCell>
+                        <TableCell>{latestExercisePRs.maxWeight.value}</TableCell>
+                        <TableCell>{latestExercisePRs.maxWeight.date.toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
         </Box>
       )}
 
