@@ -27,7 +27,7 @@ const WorkoutListPage: React.FC = () => {
   });
 
   return (
-    <Container>
+    <Container sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" gutterBottom>
         My Workouts
       </Typography>

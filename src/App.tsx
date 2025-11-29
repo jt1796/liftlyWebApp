@@ -33,8 +33,15 @@ function App() {
             <Route
               path="/"
               element={
-                <Box>
-                  <Typography>Welcome, {currentUser?.email}</Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '80vh', // Adjust as needed to center vertically on the page
+                  }}
+                >
+                  <Typography variant="h5">Welcome, {currentUser?.email}</Typography>
                 </Box>
               }
             />
