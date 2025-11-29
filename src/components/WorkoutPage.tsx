@@ -346,7 +346,6 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
             <Stack direction="row" spacing={2} alignItems="center">
               <FormControl fullWidth>
                 <Autocomplete
-                  disablePortal
                   value={exercise.name}
                   options={combinedExercises}
                   onChange={(_, value) => handleExerciseChange(exerciseIndex, 'name', value!)}
