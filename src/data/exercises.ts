@@ -40,6 +40,22 @@ export const exercises = [
   'Smith incline bench',
   'Smith bench press',
 
+  'Cable lat pulldown',
+  'Cable lat pulldown (narrow grip)',
+  'Cable row',
+  'Cable row (narrow grip)',
+  'Cable tricep pushdown',
+
+  'Generic leg press machine',
+  'Generic chest press machine',
+  'Generic dip machine',
+  'Generic curl machine',
+  'Generic quad leg extension machine',
+  'Generic seated ham leg curl machine',
+  'Generic lying ham leg curl machine',
+  'Generic row machine',
+  'Generic lat pulldown machine',
+
   'Pull Up',
   'Chin Up',
   'Dip',
