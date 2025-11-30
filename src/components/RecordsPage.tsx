@@ -27,6 +27,7 @@ import {
   type LatestExercisePRs,
   type ExerciseDataPoint,
   type PR,
+  createFilterOptions,
 } from '../utils';
 
 type RecentPRsArray = PR[];
@@ -76,6 +77,8 @@ const RecordsPage = () => {
     return prs.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 20);
   }, [workouts]);
 
+  const filterExerciseOptions = useMemo(() => createFilterOptions(userExercises), [userExercises]);
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h5" gutterBottom>
@@ -87,6 +90,7 @@ const RecordsPage = () => {
           value={selectedExercise}
           options={userExercises}
           onChange={(_, value) => setSelectedExercise(value)}
+          filterOptions={filterExerciseOptions}
           renderInput={(params) => <TextField {...params} label="Exercise" />}
         />
       </FormControl>
