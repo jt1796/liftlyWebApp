@@ -26,10 +26,9 @@ The project follows a standard React application structure:
 
 *   `public/`: Contains static assets like `index.html` and icons.
 *   `src/`: Contains the main application source code.
-    *   `utils/`: Contains some non-framework code
-        *   `exerciseUtils`: Function for computing records from workout list.
-        *   `workoutUtils`: Database calls to get a workout/list of workouts.
-        *   `customExerciseUtils.ts`: Database calls for managing custom exercises.
+    *   `utils/`: Contains utility functions.
+        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises and workout data.
+        *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs), analyzing exercise metrics, and generating E1RM suggestions.
     *   `components/`: Contains reusable React components.
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
         *   `LoginPage.tsx`: Handles user authentication.
@@ -37,7 +36,11 @@ The project follows a standard React application structure:
         *   `WorkoutListPage.tsx`: A component for listing workouts
         *   `ExercisesPage.tsx`: A component for managing custom exercises.
         *   `ProtectedLayout.tsx`: A component that guards routes that require authentication.
-    *   `contexts/`: Contains React contexts, such as for authentication.
+    *   `contexts/`: Contains React contexts for managing application-wide state.
+        *   `AuthContext.tsx`: Provides an `AuthProvider` component to manage user authentication state using Firebase. It makes the current user, loading status, and logout function available to its children.
+        *   `auth-context-utils.ts`: Defines the `AuthContext` and a `useAuth` hook for components to easily access authentication state.
+        *   `AppProvider.tsx`: Provides an `AppProvider` component that manages application-level settings, such as the light/dark mode theme, using local storage for persistence.
+        *   `app-context-utils.ts`: Defines the `AppContext` and a `useApp` hook for components to access application-level settings.
     *   `data/`: Contains static data, such as the list of exercises.
     *   `firebase.ts`: Initializes and configures the Firebase SDK.
     *   `App.tsx`: The main application component that sets up routing.
@@ -48,3 +51,4 @@ The project follows a standard React application structure:
 *   Use https://mui.com/material-ui/llms.txt as MUI reference
 *   Make the UI work on mobile as well as desktop
 *   Test the build/lint with `npm run build`
+*   Update this files after making new files/functions
