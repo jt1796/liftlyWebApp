@@ -3,19 +3,17 @@ import type { Workout } from '../types';
 import dayjs from 'dayjs';
 
 export const createFilterOptions = (allExercises: string[]) => {
-  const fuse = new Fuse(allExercises, {
-    isCaseSensitive: false,
-    includeScore: true,
+  const fuseOptions = {
     shouldSort: true,
-    threshold: 0.4,
-  });
+  };
+  const fuse = new Fuse(allExercises, fuseOptions);
 
   return (options: string[], { inputValue }: { inputValue: string }) => {
     if (!inputValue) {
       return options;
     }
-    const result = fuse.search(inputValue);
-    return result.map((res) => res.item);
+
+    return fuse.search(inputValue).map((res) => res.item);
   };
 };
 

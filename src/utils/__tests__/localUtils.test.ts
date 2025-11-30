@@ -70,16 +70,15 @@ describe('localUtils', () => {
       'Dumbbell Curl',
       'Triceps Extension',
       'Leg Press',
-      'Machine Row',
-      'Generic Machine Row',
+      'Generic row machine',
     ];
 
     const filterOptions = createFilterOptions(allExercises);
 
     it('should filter options case-insensitively and with partial matches', () => {
-      expect(filterOptions(allExercises, { inputValue: 'bench' })).toEqual(['Bench Press']);
-      expect(filterOptions(allExercises, { inputValue: 'row' })).toEqual(['Barbell Row', 'Machine Row', 'Generic Machine Row']);
-      expect(filterOptions(allExercises, { inputValue: 'generic row' })).toEqual(['Generic Machine Row']);
+      expect(filterOptions(allExercises, { inputValue: 'bench' })).toEqual(['Bench Press', 'Generic row machine']);
+      expect(filterOptions(allExercises, { inputValue: 'row' })).toEqual(['Barbell Row', 'Generic row machine']);
+      expect(filterOptions(allExercises, { inputValue: 'generic row' })).toEqual(['Generic row machine', 'Barbell Row']);
     });
 
     it('should handle fuzzy matches/typos', () => {
@@ -92,7 +91,7 @@ describe('localUtils', () => {
     });
 
     it('should return an empty array if no matches are found', () => {
-      expect(filterOptions(allExercises, { inputValue: 'nonexistent' })).toEqual([]);
+      expect(filterOptions(allExercises, { inputValue: 'blahblahblah' })).toEqual([]);
     });
 
     it('should return options that exactly match', () => {
@@ -101,7 +100,17 @@ describe('localUtils', () => {
 
     it('should return options in a sorted manner', () => {
       const result = filterOptions(allExercises, { inputValue: 'machine' });
-      expect(result).toEqual(['Machine Row', 'Generic Machine Row']);
+      expect(result).toEqual(['Generic row machine']);
+    });
+
+    it('should handle multi-word queries where order does not matter', () => {
+      const result = filterOptions(allExercises, { inputValue: 'machine row' });
+      expect(result).toEqual(['Barbell Row', 'Generic row machine']);
+
+      const result2 = filterOptions(allExercises, {
+        inputValue: 'row machine',
+      });
+      expect(result2).toEqual(['Generic row machine']);
     });
   });
 
