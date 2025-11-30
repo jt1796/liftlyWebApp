@@ -69,7 +69,7 @@ export const calculateAllPRs = (workouts: Workout[]): PR[] => {
     }
   }
 
-  return allPRs;
+  return allPRs.filter(pr => pr.oldValue !== null);
 };
 
 

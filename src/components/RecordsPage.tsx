@@ -73,7 +73,7 @@ const RecordsPage = () => {
   const recentPRs: RecentPRsArray = useMemo(() => {
     if (!workouts) return [];
     const prs = calculateAllPRs(workouts);
-    return prs.filter((a) => !!a.oldValue).sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 20);
+    return prs.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 20);
   }, [workouts]);
 
   return (
