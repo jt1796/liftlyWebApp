@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Workout, Exercise, Set } from '../types';
 import { exercises as exerciseList } from '../data/exercises';
@@ -70,12 +70,14 @@ const WorkoutPage: React.FC = () => {
     enabled: !!currentUser,
   });
 
-  const combinedExercises = [
-    ...exerciseList,
-    ...customExercises.map((ex: CustomExercise) => ex.name),
-  ];
+  const combinedExercises = useMemo(() => {
+    return [
+      ...exerciseList,
+      ...customExercises.map((ex: CustomExercise) => ex.name),
+    ];
+  }, [customExercises]);
 
-  const filterExerciseOptions = React.useMemo(() => createFilterOptions(combinedExercises), [combinedExercises]);
+  const filterExerciseOptions = useMemo(() => createFilterOptions(combinedExercises), [combinedExercises]);
 
   useEffect(() => {
     if (id) {

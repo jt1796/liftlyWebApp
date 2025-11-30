@@ -5,9 +5,13 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Switch,
+  FormControlLabel,
+  Box,
 } from '@mui/material';
-import { Logout, FitnessCenter, ListAlt, QueryStats, Create } from '@mui/icons-material';
+import { Logout, FitnessCenter, ListAlt, QueryStats, Create, Brightness4, Brightness7 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/auth-context-utils';
+import { useApp } from '../../contexts/app-context-utils';
 import { Link } from 'react-router-dom';
 
 interface SidebarProps {
@@ -17,6 +21,11 @@ interface SidebarProps {
 
 const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
   const { logout } = useAuth();
+  const { darkMode, setDarkMode } = useApp();
+
+  const handleThemeChange = () => {
+    setDarkMode(darkMode === 'dark' ? 'light' : 'dark');
+  };
 
   const drawerContent = (
     <List>
@@ -59,6 +68,20 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           </ListItemIcon>
           <ListItemText primary="Logout" sx={{ marginRight: 5 }} />
         </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <FormControlLabel
+          control={<Switch checked={darkMode === 'dark'} onChange={handleThemeChange} />}
+          label={
+            <Box display="flex" alignItems="center">
+              <ListItemIcon sx={{ minWidth: 'auto', mr: 1 }}>
+                {darkMode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+              </ListItemIcon>
+              <ListItemText primary={darkMode === 'dark' ? 'Light Mode' : 'Dark Mode'} />
+            </Box>
+          }
+          sx={{ ml: 1 }}
+        />
       </ListItem>
     </List>
   );

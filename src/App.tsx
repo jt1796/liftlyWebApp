@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useAuth } from './contexts/auth-context-utils';
+import { useApp } from './contexts/app-context-utils'; // Import useApp
 import LoginPage from './components/LoginPage';
 import ProtectedLayout from './components/ProtectedLayout';
 import NotFoundPage from './components/NotFoundPage';
@@ -15,14 +16,15 @@ import {
   CssBaseline,
 } from '@mui/material';
 
-const theme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
-
 function App() {
   const { currentUser } = useAuth();
+  const { darkMode } = useApp(); // Use darkMode from context
+
+  const theme = createTheme({
+    palette: {
+      mode: darkMode, // Set theme mode dynamically
+    },
+  });
 
   return (
     <ThemeProvider theme={theme}>
