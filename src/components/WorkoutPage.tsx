@@ -21,8 +21,14 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import { getWorkoutById, calculateOneRepMax, findSetToPR, getE1RmSuggestions } from '../utils/workoutUtils';
-import { getCustomExercises } from '../utils/customExerciseUtils';
+import {
+  getWorkoutById,
+  calculateOneRepMax,
+  findSetToPR,
+  getE1RmSuggestions,
+  getCustomExercises,
+  getWorkoutsForUser,
+} from '../utils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -104,27 +110,29 @@ const WorkoutPage: React.FC = () => {
     }
   }, [workout, id]);
 
+  const { data: allWorkouts } = useQuery({
+    queryKey: ['workouts', currentUser?.uid],
+    queryFn: () => getWorkoutsForUser(currentUser!.uid),
+    enabled: !!currentUser,
+  });
+
   useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (!currentUser || !workout) {
-        setE1rmSuggestions({});
-        return;
-      }
+    if (!currentUser || !workout || !allWorkouts) {
+      setE1rmSuggestions({});
+      return;
+    }
 
-      setIsE1RMLoading(true);
-      try {
-        const suggestions = await getE1RmSuggestions(currentUser.uid, workout);
-        setE1rmSuggestions(suggestions);
-      } catch (error) {
-        console.error('Error fetching E1RM suggestions:', error);
-        setE1rmSuggestions({});
-      } finally {
-        setIsE1RMLoading(false);
-      }
-    };
-
-    fetchSuggestions();
-  }, [currentUser, workout]);
+    setIsE1RMLoading(true);
+    try {
+      const suggestions = getE1RmSuggestions(allWorkouts, workout);
+      setE1rmSuggestions(suggestions);
+    } catch (error) {
+      console.error('Error fetching E1RM suggestions:', error);
+      setE1rmSuggestions({});
+    } finally {
+      setIsE1RMLoading(false);
+    }
+  }, [currentUser, workout, allWorkouts]);
 
 
   const handleDeleteWorkout = async () => {

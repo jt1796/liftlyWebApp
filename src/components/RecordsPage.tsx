@@ -18,16 +18,16 @@ import {
 } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery } from '@tanstack/react-query';
-import { getWorkoutsForUser } from '../utils/workoutUtils';
 import { useAuth } from '../contexts/auth-context-utils';
 import {
+  getWorkoutsForUser,
   calculateExerciseMetrics,
   calculateAllPRs,
   getLatestExercisePRs,
   type LatestExercisePRs,
   type ExerciseDataPoint,
   type PR,
-} from '../utils/exerciseUtils';
+} from '../utils';
 
 type RecentPRsArray = PR[];
 

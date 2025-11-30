@@ -12,10 +12,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useAuth } from '../contexts/auth-context-utils';
-import {
-  getCustomExercises,
-  saveCustomExercises,
-} from '../utils/customExerciseUtils';
+import { getCustomExercises, saveCustomExercises } from '../utils';
 import type { CustomExercise } from '../types';
 
 const ExercisesPage = () => {

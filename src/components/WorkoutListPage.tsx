@@ -10,7 +10,7 @@ import {
   ListItemButton,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { getWorkoutsForUser } from '../utils/workoutUtils';
+import { getWorkoutsForUser } from '../utils';
 import { useAuth } from '../contexts/auth-context-utils';
 import { Link } from 'react-router-dom';
 
