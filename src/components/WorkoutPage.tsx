@@ -379,6 +379,9 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
                     value={set.weight}
                     sx={{ maxWidth: '100px' }}
                     onFocus={e => e.target.select()}
+                    InputProps={{
+                      inputProps: { min: 0 }
+                    }}
                     onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseInt(e.target.value))}
                   />
                   <TextField
@@ -387,6 +390,9 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
                     value={set.reps}
                     sx={{ maxWidth: '100px' }}
                     onFocus={e => e.target.select()}
+                    InputProps={{
+                      inputProps: { min: 0 }
+                    }}
                     onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
                   />
                   <Typography variant="body2" sx={{ minWidth: '80px', textAlign: 'center' }}>
