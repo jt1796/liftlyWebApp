@@ -28,6 +28,7 @@ import {
   getE1RmSuggestions,
   getCustomExercises,
   getWorkoutsForUser,
+  createFilterOptions,
 } from '../utils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -74,6 +75,7 @@ const WorkoutPage: React.FC = () => {
     ...customExercises.map((ex: CustomExercise) => ex.name),
   ];
 
+  const filterExerciseOptions = React.useMemo(() => createFilterOptions(combinedExercises), [combinedExercises]);
 
   useEffect(() => {
     if (id) {
@@ -356,6 +358,7 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
                 <Autocomplete
                   value={exercise.name}
                   options={combinedExercises}
+                  filterOptions={filterExerciseOptions}
                   onChange={(_, value) => handleExerciseChange(exerciseIndex, 'name', value!)}
                   renderInput={(params) => <TextField {...params} label="Exercise" />}
                 />

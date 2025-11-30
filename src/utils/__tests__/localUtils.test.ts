@@ -5,7 +5,8 @@ import {
   calculateExerciseMetrics,
   calculateOneRepMax,
   findSetToPR,
-} from '../';
+  createFilterOptions,
+} from '../localUtils';
 import type { Workout } from '../../types';
 
 describe('localUtils', () => {
@@ -58,6 +59,51 @@ describe('localUtils', () => {
       ],
     },
   ];
+
+  describe('createFilterOptions', () => {
+    const allExercises = [
+      'Bench Press',
+      'Squat',
+      'Deadlift',
+      'Overhead Press',
+      'Barbell Row',
+      'Dumbbell Curl',
+      'Triceps Extension',
+      'Leg Press',
+      'Machine Row',
+      'Generic Machine Row',
+    ];
+
+    const filterOptions = createFilterOptions(allExercises);
+
+    it('should filter options case-insensitively and with partial matches', () => {
+      expect(filterOptions(allExercises, { inputValue: 'bench' })).toEqual(['Bench Press']);
+      expect(filterOptions(allExercises, { inputValue: 'row' })).toEqual(['Barbell Row', 'Machine Row', 'Generic Machine Row']);
+      expect(filterOptions(allExercises, { inputValue: 'generic row' })).toEqual(['Generic Machine Row']);
+    });
+
+    it('should handle fuzzy matches/typos', () => {
+      expect(filterOptions(allExercises, { inputValue: 'squattt' })).toEqual(['Squat']);
+      expect(filterOptions(allExercises, { inputValue: 'dedlift' })).toEqual(['Deadlift']);
+    });
+
+    it('should return all options (sliced to 200) if inputValue is empty', () => {
+      expect(filterOptions(allExercises, { inputValue: '' })).toEqual(allExercises);
+    });
+
+    it('should return an empty array if no matches are found', () => {
+      expect(filterOptions(allExercises, { inputValue: 'nonexistent' })).toEqual([]);
+    });
+
+    it('should return options that exactly match', () => {
+      expect(filterOptions(allExercises, { inputValue: 'Squat' })).toEqual(['Squat']);
+    });
+
+    it('should return options in a sorted manner', () => {
+      const result = filterOptions(allExercises, { inputValue: 'machine' });
+      expect(result).toEqual(['Machine Row', 'Generic Machine Row']);
+    });
+  });
 
   describe('calculateAllPRs', () => {
     it('should calculate all PRs correctly', () => {
