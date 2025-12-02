@@ -89,7 +89,15 @@ const WorkoutPage: React.FC = () => {
         const storedWorkout = localStorage.getItem(localStorageKey);
         if (storedWorkout) {
           const parsedWorkout = JSON.parse(storedWorkout);
-          parsedWorkout.date = new Date(parsedWorkout.date);
+          const storedDate = new Date(parsedWorkout.date);
+          const now = new Date();
+          const threeHours = 3 * 60 * 60 * 1000;
+
+          if (now.getTime() - storedDate.getTime() > threeHours) {
+            parsedWorkout.date = now;
+          } else {
+            parsedWorkout.date = storedDate;
+          }
           setWorkout(parsedWorkout as Workout);
         } else {
           setWorkout({
