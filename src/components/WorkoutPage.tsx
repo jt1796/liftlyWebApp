@@ -401,6 +401,7 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
                     InputProps={{
                       inputProps: { min: 0 }
                     }}
+                    error={set.reps === 0}
                     onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
                   />
                   <Typography variant="body2" sx={{ minWidth: '80px', textAlign: 'center' }}>
