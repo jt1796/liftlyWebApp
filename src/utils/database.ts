@@ -38,6 +38,8 @@ export const getWorkoutsForUser = async (userId: string): Promise<Workout[]> => 
         date: (data.date as Timestamp).toDate(),
       } as Workout);
     });
+
+    workouts.sort((a, b) => b.date.getTime() - a.date.getTime());
     return workouts;
   };
 
