@@ -18,9 +18,11 @@ import {
   Autocomplete,
   Alert,
   Snackbar,
+  ButtonGroup,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+
 import {
   getWorkoutById,
   calculateOneRepMax,
@@ -219,23 +221,32 @@ const WorkoutPage: React.FC = () => {
     setShowSnackbar(false);
   };
 
-  const handleCopyWorkout = () => {
+  const handleCopyWorkout = (format: 'txt' | 'phpbb') => {
     if (!workout) return;
 
-    const workoutText = `Workout on ${dayjs(workout.date).format('MMMM D, YYYY')}
+    const workoutText = workout.exercises
+      .map((exercise) => {
+        const exerciseName =
+          format === 'phpbb'
+            ? `[b][size=125]${exercise.name}[/size][/b]`
+            : exercise.name;
+        const sets = exercise.sets
+          .map((set) => `  - ${set.weight} x ${set.reps}`)
+          .join('\n');
+        return `${exerciseName}\n${sets}`;
+      })
+      .join('\n\n');
 
-${workout.exercises
-  .map(
-    (exercise) =>
-      `${exercise.name}
-${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
-  )
-  .join('\n\n')}
-`;
+    const fullWorkoutText =
+      format === 'txt'
+        ? `Workout on ${dayjs(workout.date).format(
+            'MMMM D, YYYY'
+          )}\n\n${workoutText}`
+        : workoutText;
 
-    navigator.clipboard.writeText(workoutText).then(
+    navigator.clipboard.writeText(fullWorkoutText).then(
       () => {
-        setSnackbarMessage('Workout copied to clipboard!');
+        setSnackbarMessage(`Workout copied as ${format.toUpperCase()}!`);
         setSnackbarSeverity('success');
         setShowSnackbar(true);
       },
@@ -346,9 +357,12 @@ ${exercise.sets.map((set) => `  - ${set.weight} x ${set.reps}`).join('\n')}`
         <Typography variant="h4" component="h1" gutterBottom>
           {id ? 'Edit Workout' : 'Create Workout'}
         </Typography>
-        <IconButton onClick={handleCopyWorkout} color="primary">
-          <ContentCopyIcon />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ButtonGroup variant="outlined" aria-label="outlined button group" size="small">
+            <Button startIcon={<ContentCopyIcon />} onClick={() => handleCopyWorkout('txt')}>txt</Button>
+            <Button startIcon={<ContentCopyIcon />} onClick={() => handleCopyWorkout('phpbb')}>phpbb</Button>
+          </ButtonGroup>
+        </Box>
       </Box>
       <Stack spacing={3} sx={{ mb: 3 }}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
