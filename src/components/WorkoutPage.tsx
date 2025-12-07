@@ -31,6 +31,7 @@ import {
   getCustomExercises,
   getWorkoutsForUser,
   createFilterOptions,
+  workoutToText,
 } from '../utils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -224,26 +225,7 @@ const WorkoutPage: React.FC = () => {
   const handleCopyWorkout = (format: 'txt' | 'phpbb') => {
     if (!workout) return;
 
-    const workoutText = workout.exercises
-      .map((exercise) => {
-        const exerciseName =
-          format === 'phpbb'
-            ? `[b][size=125]${exercise.name}[/size][/b]`
-            : exercise.name;
-        const sets = exercise.sets
-          .map((set) => `  - ${set.weight} x ${set.reps}`)
-          .join('\n');
-        return `${exerciseName}\n${sets}`;
-      })
-      .join('\n\n');
-
-    const fullWorkoutText =
-      format === 'txt'
-        ? `Workout on ${dayjs(workout.date).format(
-            'MMMM D, YYYY'
-          )}\n\n${workoutText}`
-        : workoutText;
-
+    const fullWorkoutText = workoutToText(workout, format);
     navigator.clipboard.writeText(fullWorkoutText).then(
       () => {
         setSnackbarMessage(`Workout copied as ${format.toUpperCase()}!`);
@@ -257,7 +239,8 @@ const WorkoutPage: React.FC = () => {
         setShowSnackbar(true);
       }
     );
-  };
+
+  }
 
   const handleExerciseChange = (index: number, field: keyof Exercise, value: string) => {
     if (!workout) return;

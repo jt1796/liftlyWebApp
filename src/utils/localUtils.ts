@@ -240,3 +240,25 @@ export const findSetToPR = (targetE1RM: number) => {
     }
     return newE1RMSuggestions;
   };
+
+export const workoutToText = (workout: Workout, format: 'txt' | 'phpbb') => {
+    const workoutText = workout.exercises
+      .map((exercise) => {
+        const exerciseName =
+          format === 'phpbb'
+            ? `[b][size=125]${exercise.name}[/size][/b]`
+            : exercise.name;
+        const sets = exercise.sets
+          .map((set) => `  - ${set.weight} x ${set.reps}`)
+          .join('\n');
+        return `${exerciseName}\n${sets}`;
+      })
+      .join('\n\n');
+
+    const title = `Workout on ${dayjs(workout.date).format(
+            'MMMM D, YYYY'
+          )}`;
+    const dateSegment = format === 'txt' ? title : `[u][size=200]${title}[/size][/u]`;
+
+    return dateSegment + '\n\n' + workoutText;
+  };

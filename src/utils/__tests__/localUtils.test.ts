@@ -6,6 +6,7 @@ import {
   calculateOneRepMax,
   findSetToPR,
   createFilterOptions,
+  workoutToText,
 } from '../localUtils';
 import type { Workout } from '../../types';
 
@@ -271,6 +272,7 @@ describe('localUtils', () => {
     });
   });
 
+
   describe('findSetToPR', () => {
     it('should return if targetE1RM is 0', () => {
       expect(findSetToPR(0)).toEqual({ reps: 3, weight: 5 });
@@ -284,6 +286,62 @@ describe('localUtils', () => {
       expect(result).toBeDefined();
       expect(result!.reps).toEqual(reps);
       expect(result!.weight).toEqual(weight);
+    });
+  });
+
+  describe('workoutToText', () => {
+    const mockWorkout = {
+      id: '4',
+      date: new Date('2023-03-15T10:00:00.000Z'),
+      exercises: [
+        {
+          name: 'Overhead Press',
+          sets: [
+            { weight: 50, reps: 5 },
+            { weight: 55, reps: 3 },
+          ],
+        },
+        {
+          name: 'Deadlift',
+          sets: [
+            { weight: 130, reps: 5 },
+            { weight: 140, reps: 3 },
+            { weight: 150, reps: 1 },
+          ],
+        },
+      ],
+    };
+
+    it('should convert workout to plain text format', () => {
+      const result = workoutToText(mockWorkout, 'txt');
+      expect(result).toMatchInlineSnapshot(`
+        "Workout on March 15, 2023
+
+        Overhead Press
+          - 50 x 5
+          - 55 x 3
+
+        Deadlift
+          - 130 x 5
+          - 140 x 3
+          - 150 x 1"
+      `);
+    });
+
+    it('should convert workout to phpBB format', () => {
+      const result = workoutToText(mockWorkout, 'phpbb');
+      expect(result).toMatchInlineSnapshot(`
+        "[u][size=200]Workout on March 15, 2023[/size][/u]
+
+        [b][size=125]Overhead Press[/size][/b]
+          - 50 x 5
+          - 55 x 3
+
+        [b][size=125]Deadlift[/size][/b]
+          - 130 x 5
+          - 140 x 3
+          - 150 x 1"
+      `);
     });
   });
 });
