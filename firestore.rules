@@ -6,7 +6,8 @@ service cloud.firestore {
       let allowedUserIds = [
         "xQ0sExBTkmZSCQD2Zs0hDORRUt12",
         "6cT477DQObavj7X8kTMnIDuuIWD2",
-        "Qne0mxI3ZWeOjrsid5wYMDZeBIa2"
+        "Qne0mxI3ZWeOjrsid5wYMDZeBIa2",
+        "Hz6eL8butaShNPqxSQlArpkppRl1"
       ];
       return request.auth.uid in allowedUserIds;
     }
