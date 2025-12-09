@@ -17,3 +17,8 @@ export interface Workout {
 export interface CustomExercise {
   name: string;
 }
+
+export interface Template {
+  name: string;
+  exercises: Exercise[];
+}

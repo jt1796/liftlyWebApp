@@ -8,6 +8,7 @@ import WorkoutListPage from './components/WorkoutListPage';
 import WorkoutPage from './components/WorkoutPage';
 import RecordsPage from './components/RecordsPage';
 import ExercisesPage from './components/ExercisesPage';
+import TemplatesPage from './components/TemplatesPage';
 import ErrorPage from './components/ErrorPage';
 import { Box, Typography  } from '@mui/material';
 import {
@@ -54,6 +55,7 @@ function App() {
             <Route path="/workouts" element={<WorkoutListPage />} />
             <Route path="/records" element={<RecordsPage />} />
             <Route path="/exercises" element={<ExercisesPage />} />
+            <Route path="/templates" element={<TemplatesPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

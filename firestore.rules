@@ -19,5 +19,9 @@ service cloud.firestore {
     match /customExercises/{userId} {
       allow read, create, update: if request.auth != null && request.auth.uid == userId && isAllowedUser();
     }
+
+    match /templates/{userId} {
+      allow read, create, update: if request.auth != null && request.auth.uid == userId && isAllowedUser();
+    }
   }
 }

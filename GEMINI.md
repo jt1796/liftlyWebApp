@@ -25,9 +25,10 @@ The application will have access to the users workout history, and can use this 
 The project follows a standard React application structure:
 
 *   `public/`: Contains static assets like `index.html` and icons.
-*   `src/`: Contains the main application source code.
+    *   `src/`: Contains the main application source code.
+    *   `types.ts`: Defines TypeScript interfaces for data structures like `Set`, `Exercise`, `Workout`, `CustomExercise`, and `Template`.
     *   `utils/`: Contains utility functions.
-        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises and workout data.
+        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data, and workout templates.
         *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs), analyzing exercise metrics, generating E1RM suggestions, and converting workout data to text.
     *   `components/`: Contains reusable React components.
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
@@ -35,6 +36,7 @@ The project follows a standard React application structure:
         *   `WorkoutPage.tsx`: Core component for creating and editing workouts.
         *   `WorkoutListPage.tsx`: A component for listing workouts
         *   `ExercisesPage.tsx`: A component for managing custom exercises.
+        *   `TemplatesPage.tsx`: A component for creating and managing workout templates.
         *   `ProtectedLayout.tsx`: A component that guards routes that require authentication.
     *   `contexts/`: Contains React contexts for managing application-wide state.
         *   `AuthContext.tsx`: Provides an `AuthProvider` component to manage user authentication state using Firebase. It makes the current user, loading status, and logout function available to its children.
