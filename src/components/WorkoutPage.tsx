@@ -22,7 +22,8 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-
+import HistoryIcon from '@mui/icons-material/History';
+import AddIcon from '@mui/icons-material/Add';
 import {
   getWorkoutById,
   calculateOneRepMax,
@@ -32,6 +33,7 @@ import {
   getWorkoutsForUser,
   createFilterOptions,
   workoutToText,
+  getExerciseHistory,
 } from '../utils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -41,6 +43,7 @@ import { collection, addDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/auth-context-utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CustomExercise } from '../types';
+import ExerciseHistoryDialog from './ExerciseHistoryDialog';
 
 const localStorageKey = 'liftly-currentWorkout';
 
@@ -56,6 +59,9 @@ const WorkoutPage: React.FC = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [e1rmSuggestions, setE1rmSuggestions] = useState<Record<string, number>>({});
   const [isE1RMLoading, setIsE1RMLoading] = useState(false);
+  const [exerciseHistory, setExerciseHistory] = useState<(Workout & { exercise: Exercise; })[]>([]);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [historyExerciseName, setHistoryExerciseName] = useState('');
 
   const {
     data: fetchedWorkout,
@@ -130,6 +136,15 @@ const WorkoutPage: React.FC = () => {
     queryFn: () => getWorkoutsForUser(currentUser!.uid),
     enabled: !!currentUser,
   });
+
+  const handleShowHistory = (exerciseName: string) => {
+    if (allWorkouts) {
+      const history = getExerciseHistory(allWorkouts, exerciseName);
+      setExerciseHistory(history);
+      setHistoryExerciseName(exerciseName);
+      setIsHistoryDialogOpen(true);
+    }
+  };
 
   useEffect(() => {
     if (!currentUser || !workout || !allWorkouts) {
@@ -412,7 +427,15 @@ const WorkoutPage: React.FC = () => {
             ))}
           </CardContent>
           <CardActions>
-            <Button onClick={() => addSet(exerciseIndex)} size="small">Add Set</Button>
+            <Button onClick={() => addSet(exerciseIndex)} size="small" startIcon={<AddIcon />}>Add Set</Button>
+            <Button
+              onClick={() => handleShowHistory(exercise.name)}
+              size="small"
+              disabled={!allWorkouts}
+              startIcon={<HistoryIcon />}
+            >
+              History
+            </Button>
             {exercise.sets.length === 0 && e1rmSuggestions[exercise.name] && (
               <Button
                 onClick={() => handleFeelingLucky(exerciseIndex)}
@@ -446,6 +469,12 @@ const WorkoutPage: React.FC = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+      <ExerciseHistoryDialog
+        open={isHistoryDialogOpen}
+        onClose={() => setIsHistoryDialogOpen(false)}
+        exerciseHistory={exerciseHistory}
+        exerciseName={historyExerciseName}
+      />
     </Container>
   );
 };

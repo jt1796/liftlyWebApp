@@ -241,6 +241,29 @@ export const findSetToPR = (targetE1RM: number) => {
     return newE1RMSuggestions;
   };
 
+
+export const getExerciseHistory = (
+  workouts: Workout[],
+  exerciseName: string,
+  limit = 10
+) => {
+  const history = workouts
+    .filter((workout) =>
+      workout.exercises.some((e) => e.name === exerciseName)
+    )
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, limit)
+    .map((workout) => {
+      const exercise = workout.exercises.find((e) => e.name === exerciseName)!;
+      return {
+        ...workout,
+        exercise,
+      };
+    });
+
+  return history;
+};
+
 export const workoutToText = (workout: Workout, format: 'txt' | 'phpbb') => {
     const workoutText = workout.exercises
       .map((exercise) => {
