@@ -96,7 +96,7 @@ export const calculateAllPRs = (workouts: Workout[]): PR[] => {
     }
   }
 
-  return allPRs.filter(pr => pr.oldValue !== null);
+  return allPRs;
 };
 
 

@@ -119,10 +119,38 @@ describe('localUtils', () => {
     it('should calculate all PRs correctly', () => {
       const prs = calculateAllPRs(mockWorkouts);
 
-      expect(prs).toHaveLength(4);
+      expect(prs).toHaveLength(10);
 
       expect(prs).toMatchInlineSnapshot(`
         [
+          {
+            "date": 2023-01-01T00:00:00.000Z,
+            "exerciseName": "Bench Press",
+            "oldValue": null,
+            "type": "Max Weight",
+            "value": 105,
+          },
+          {
+            "date": 2023-01-01T00:00:00.000Z,
+            "exerciseName": "Bench Press",
+            "oldValue": null,
+            "type": "E1RM",
+            "value": 117,
+          },
+          {
+            "date": 2023-01-01T00:00:00.000Z,
+            "exerciseName": "Squat",
+            "oldValue": null,
+            "type": "Max Weight",
+            "value": 120,
+          },
+          {
+            "date": 2023-01-01T00:00:00.000Z,
+            "exerciseName": "Squat",
+            "oldValue": null,
+            "type": "E1RM",
+            "value": 140,
+          },
           {
             "date": 2023-01-05T00:00:00.000Z,
             "exerciseName": "Bench Press",
@@ -136,6 +164,20 @@ describe('localUtils', () => {
             "oldValue": 117,
             "type": "E1RM",
             "value": 121,
+          },
+          {
+            "date": 2023-01-05T00:00:00.000Z,
+            "exerciseName": "Deadlift",
+            "oldValue": null,
+            "type": "Max Weight",
+            "value": 150,
+          },
+          {
+            "date": 2023-01-05T00:00:00.000Z,
+            "exerciseName": "Deadlift",
+            "oldValue": null,
+            "type": "E1RM",
+            "value": 175,
           },
           {
             "date": 2023-01-10T00:00:00.000Z,
