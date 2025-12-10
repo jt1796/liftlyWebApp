@@ -30,11 +30,27 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
   const drawerContent = (
     <List>
       <ListItem disablePadding>
+        <ListItemButton component={Link} to="/workout" onClick={handleDrawerToggle}>
+          <ListItemIcon>
+            <Create />
+          </ListItemIcon>
+          <ListItemText primary="New Workout" sx={{ marginRight: 5 }} />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
         <ListItemButton component={Link} to="/workouts" onClick={handleDrawerToggle}>
           <ListItemIcon>
             <ListAlt />
           </ListItemIcon>
           <ListItemText primary="My Workouts" sx={{ marginRight: 5 }} />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton component={Link} to="/templates" onClick={handleDrawerToggle}>
+          <ListItemIcon>
+            <Construction />
+          </ListItemIcon>
+          <ListItemText primary="Templates" sx={{ marginRight: 5 }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -51,22 +67,6 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
             <FitnessCenter />
           </ListItemIcon>
           <ListItemText primary="Exercises" sx={{ marginRight: 5 }} />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton component={Link} to="/templates" onClick={handleDrawerToggle}>
-          <ListItemIcon>
-            <Construction />
-          </ListItemIcon>
-          <ListItemText primary="Templates" sx={{ marginRight: 5 }} />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton component={Link} to="/workout" onClick={handleDrawerToggle}>
-          <ListItemIcon>
-            <Create />
-          </ListItemIcon>
-          <ListItemText primary="New Workout" sx={{ marginRight: 5 }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
