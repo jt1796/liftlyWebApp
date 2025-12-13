@@ -15,6 +15,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Chip,
 } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery } from '@tanstack/react-query';
@@ -100,6 +101,8 @@ const RecordsPage = () => {
 
       {selectedExercise && exerciseData.length > 0 && (
         <Box>
+          {latestExercisePRs.e1rm && <Chip label={latestExercisePRs.e1rm!.value + ' E1RM'} />}
+          {latestExercisePRs.maxWeight && <Chip label={latestExercisePRs.maxWeight!.value + ' Max Weight'} />}
           <Typography variant="h5" gutterBottom>
             Volume Over Time
           </Typography>
@@ -138,38 +141,6 @@ const RecordsPage = () => {
             ]}
             height={300}
           />
-
-          {(latestExercisePRs.e1rm || latestExercisePRs.maxWeight) && (
-            <Box sx={{ mt: 4 }}>
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Metric</TableCell>
-                      <TableCell>Value</TableCell>
-                      <TableCell>Date</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {latestExercisePRs.e1rm && (
-                      <TableRow>
-                        <TableCell>Estimated 1RM</TableCell>
-                        <TableCell>{latestExercisePRs.e1rm.value.toFixed(2)}</TableCell>
-                        <TableCell>{latestExercisePRs.e1rm.date.toLocaleDateString()}</TableCell>
-                      </TableRow>
-                    )}
-                    {latestExercisePRs.maxWeight && (
-                      <TableRow>
-                        <TableCell>Most Weight Lifted</TableCell>
-                        <TableCell>{latestExercisePRs.maxWeight.value}</TableCell>
-                        <TableCell>{latestExercisePRs.maxWeight.date.toLocaleDateString()}</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          )}
         </Box>
       )}
 
@@ -177,7 +148,7 @@ const RecordsPage = () => {
         <Typography>No data available for this exercise.</Typography>
       )}
 
-      {!selectedExercise && !!recentPRs.length && (
+      {!!recentPRs.length && (
         <Box>
           <Typography variant="h5" gutterBottom>
             Recent Personal Records
@@ -189,19 +160,19 @@ const RecordsPage = () => {
                   <TableCell>Exercise</TableCell>
                   <TableCell>Date</TableCell>
                   <TableCell>PR</TableCell>
-                  <TableCell>Old PR</TableCell>
+                  <TableCell>Type</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {recentPRs.map((pr, index) => (
+                {recentPRs.filter(pr => !selectedExercise || (pr.exerciseName === selectedExercise)).map((pr, index) => (
                   <TableRow key={index}>
                     <TableCell>{pr.exerciseName}</TableCell>
                     <TableCell>{pr.date.toLocaleDateString()}</TableCell>
                     <TableCell>
-                      {pr.value} ({pr.type})
+                      {pr.oldValue} {'→'} {pr.value}
                     </TableCell>
                     <TableCell>
-                      {pr.oldValue ? `${pr.oldValue}` : 'N/A'}
+                      {pr.type}
                     </TableCell>
                   </TableRow>
                 ))}
