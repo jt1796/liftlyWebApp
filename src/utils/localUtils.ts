@@ -32,15 +32,15 @@ export interface PR {
 }
 
 export const calculateOneRepMax = (weight: number, reps: number) => {
-    if (reps === 0) {
-      return 0;
-    }
-    if (reps === 1) {
-      return weight;
-    }
+  if (reps === 0) {
+    return 0;
+  }
+  if (reps === 1) {
+    return weight;
+  }
 
-    return Math.round(weight * (1 + reps / 30));
-  };
+  return Math.round(weight * (1 + reps / 30));
+};
 
 export const calculateAllPRs = (workouts: Workout[]): PR[] => {
   const sortedWorkouts = workouts
@@ -179,67 +179,67 @@ export const calculateExerciseMetrics = (
 };
 
 export const findSetToPR = (targetE1RM: number) => {
-    let bestWeight = 0;
-    let bestReps = 0;
-    let smallestDifference = Infinity;
+  let bestWeight = 0;
+  let bestReps = 0;
+  let smallestDifference = Infinity;
 
-    for (let reps = 3; reps <= 20; reps++) {
-      let requiredWeight = Math.ceil(targetE1RM / (1 + reps / 30));
-      requiredWeight = Math.ceil(requiredWeight / 5) * 5;
+  for (let reps = 3; reps <= 20; reps++) {
+    let requiredWeight = Math.ceil(targetE1RM / (1 + reps / 30));
+    requiredWeight = Math.ceil(requiredWeight / 5) * 5;
 
-      let currentE1RM = calculateOneRepMax(requiredWeight, reps);
+    let currentE1RM = calculateOneRepMax(requiredWeight, reps);
 
-      if (currentE1RM <= targetE1RM) {
-        requiredWeight += 5;
-        currentE1RM = calculateOneRepMax(requiredWeight, reps);
-      }
-
-      const difference = currentE1RM - targetE1RM;
-
-      if (difference > 0 && difference < smallestDifference) {
-        smallestDifference = difference;
-        bestWeight = requiredWeight;
-        bestReps = reps;
-      }
+    if (currentE1RM <= targetE1RM) {
+      requiredWeight += 5;
+      currentE1RM = calculateOneRepMax(requiredWeight, reps);
     }
 
-    if (bestReps === 0) {
-      return null;
+    const difference = currentE1RM - targetE1RM;
+
+    if (difference > 0 && difference < smallestDifference) {
+      smallestDifference = difference;
+      bestWeight = requiredWeight;
+      bestReps = reps;
     }
+  }
 
-    return { weight: bestWeight, reps: bestReps };
-  };
+  if (bestReps === 0) {
+    return null;
+  }
 
-  export const getE1RmSuggestions = (allWorkouts: Workout[], currentWorkout: Workout): Record<string, number> => {
+  return { weight: bestWeight, reps: bestReps };
+};
 
-    const threeMonthsAgo = dayjs().subtract(3, 'month');
-    const recentWorkouts = allWorkouts.filter((w) => dayjs(w.date).isAfter(threeMonthsAgo));
+export const getE1RmSuggestions = (allWorkouts: Workout[], currentWorkout: Workout): Record<string, number> => {
 
-    const newE1RMSuggestions: Record<string, number> = {};
+  const threeMonthsAgo = dayjs().subtract(3, 'month');
+  const recentWorkouts = allWorkouts.filter((w) => dayjs(w.date).isAfter(threeMonthsAgo));
 
-    for (const exercise of currentWorkout.exercises) {
-      let maxE1RMForExercise = 0;
+  const newE1RMSuggestions: Record<string, number> = {};
 
-      for (const pastWorkout of recentWorkouts) {
-        const matchingPastExercise = pastWorkout.exercises.find(
-          (e) => e.name === exercise.name
-        );
+  for (const exercise of currentWorkout.exercises) {
+    let maxE1RMForExercise = 0;
 
-        if (matchingPastExercise) {
-          for (const set of matchingPastExercise.sets) {
-            const e1rm = calculateOneRepMax(set.weight, set.reps);
-            if (e1rm > maxE1RMForExercise) {
-              maxE1RMForExercise = e1rm;
-            }
+    for (const pastWorkout of recentWorkouts) {
+      const matchingPastExercise = pastWorkout.exercises.find(
+        (e) => e.name === exercise.name
+      );
+
+      if (matchingPastExercise) {
+        for (const set of matchingPastExercise.sets) {
+          const e1rm = calculateOneRepMax(set.weight, set.reps);
+          if (e1rm > maxE1RMForExercise) {
+            maxE1RMForExercise = e1rm;
           }
         }
       }
-      if (maxE1RMForExercise > 0) {
-        newE1RMSuggestions[exercise.name] = maxE1RMForExercise;
-      }
     }
-    return newE1RMSuggestions;
-  };
+    if (maxE1RMForExercise > 0) {
+      newE1RMSuggestions[exercise.name] = maxE1RMForExercise;
+    }
+  }
+  return newE1RMSuggestions;
+};
 
 
 export const getExerciseHistory = (
@@ -265,23 +265,73 @@ export const getExerciseHistory = (
 };
 
 export const workoutToText = (workout: Workout, format: 'txt' | 'phpbb') => {
-    const workoutText = workout.exercises
-      .map((exercise) => {
-        const exerciseName =
-          format === 'phpbb'
-            ? `[b][size=125]${exercise.name}[/size][/b]`
-            : exercise.name;
-        const sets = exercise.sets
-          .map((set) => `  - ${set.weight} x ${set.reps}`)
-          .join('\n');
-        return `${exerciseName}\n${sets}`;
-      })
-      .join('\n\n');
+  const workoutText = workout.exercises
+    .map((exercise) => {
+      const exerciseName =
+        format === 'phpbb'
+          ? `[b][size=125]${exercise.name}[/size][/b]`
+          : exercise.name;
+      const sets = exercise.sets
+        .map((set) => `  - ${set.weight} x ${set.reps}`)
+        .join('\n');
+      return `${exerciseName}\n${sets}`;
+    })
+    .join('\n\n');
 
-    const title = `Workout on ${dayjs(workout.date).format(
-            'MMMM D, YYYY'
-          )}`;
-    const dateSegment = format === 'txt' ? title : `[u][size=200]${title}[/size][/u]`;
+  const title = `Workout on ${dayjs(workout.date).format(
+    'MMMM D, YYYY'
+  )}`;
+  const dateSegment = format === 'txt' ? title : `[u][size=200]${title}[/size][/u]`;
 
-    return dateSegment + '\n\n' + workoutText;
-  };
+  return dateSegment + '\n\n' + workoutText;
+};
+
+export const getWorkoutsInDateRange = (workouts: Workout[], days: number) => {
+  const dateToCompare = dayjs().subtract(days, 'day').toDate();
+  return workouts.filter((workout) => workout.date > dateToCompare);
+};
+
+export const countExerciseFrequency = (workouts: Workout[], exerciseName: string) => {
+  return workouts.reduce((count, workout) => {
+    const exercise = workout.exercises.find((e) => e.name === exerciseName);
+    return exercise ? count + 1 : count;
+  }, 0);
+};
+
+export const getPRsInDateRange = (workouts: Workout[], days: number) => {
+  const allPRs = calculateAllPRs(workouts);
+  const dateToCompare = dayjs().subtract(days, 'day').toDate();
+  return allPRs.filter((pr) => pr.date > dateToCompare);
+}
+
+export const generateFacts = (workouts: Workout[]): string[] => {
+  const facts: string[] = [];
+  const recentWorkouts = getWorkoutsInDateRange(workouts, 30);
+
+  if (recentWorkouts.length > 0) {
+    facts.push(`You worked out ${recentWorkouts.length} times in the last 30 days`);
+
+    const exerciseFrequency = new Map<string, number>();
+    for (const workout of recentWorkouts) {
+      for (const exercise of workout.exercises) {
+        const frequency = exerciseFrequency.get(exercise.name) || 0;
+        exerciseFrequency.set(exercise.name, frequency + 1);
+      }
+    }
+
+    for (const [exerciseName, frequency] of exerciseFrequency.entries()) {
+      if (frequency > 1) {
+        facts.push(`You've trained ${exerciseName} ${frequency} times in the last 30 days`);
+      }
+    }
+
+    const recentPRs = getPRsInDateRange(workouts, 30);
+    for (const pr of recentPRs) {
+      facts.push(`You set a new PR on ${pr.exerciseName} of ${pr.value} lbs for ${pr.type} on ${dayjs(pr.date).format('MMMM D')}`);
+    }
+  } else {
+    facts.push('You have no recent workouts. Time to hit the gym!');
+  }
+
+  return facts;
+}

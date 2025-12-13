@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useAuth } from './contexts/auth-context-utils';
 import { useApp } from './contexts/app-context-utils'; // Import useApp
 import LoginPage from './components/LoginPage';
 import ProtectedLayout from './components/ProtectedLayout';
@@ -10,7 +9,7 @@ import RecordsPage from './components/RecordsPage';
 import ExercisesPage from './components/ExercisesPage';
 import TemplatesPage from './components/TemplatesPage';
 import ErrorPage from './components/ErrorPage';
-import { Box, Typography  } from '@mui/material';
+import Dashboard from './components/Dashboard';
 import {
   createTheme,
   ThemeProvider,
@@ -18,7 +17,6 @@ import {
 } from '@mui/material';
 
 function App() {
-  const { currentUser } = useAuth();
   const { darkMode } = useApp(); // Use darkMode from context
 
   const theme = createTheme({
@@ -35,21 +33,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route element={<ProtectedLayout />}>
-            <Route
-              path="/"
-              element={
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    minHeight: '80vh', // Adjust as needed to center vertically on the page
-                  }}
-                >
-                  <Typography variant="h5">Welcome, {currentUser?.email}</Typography>
-                </Box>
-              }
-            />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/workout" element={<WorkoutPage />} />
             <Route path="/workout/:id" element={<WorkoutPage />} />
             <Route path="/workouts" element={<WorkoutListPage />} />
