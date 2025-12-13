@@ -83,9 +83,9 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           label={
             <Box display="flex" alignItems="center">
               <ListItemIcon sx={{ minWidth: 'auto', mr: 1 }}>
-                {darkMode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+                {darkMode === 'light' ? <Brightness7 /> : <Brightness4 />}
               </ListItemIcon>
-              <ListItemText primary={darkMode === 'dark' ? 'Light Mode' : 'Dark Mode'} />
+              <ListItemText primary={darkMode === 'light' ? 'Light Mode' : 'Dark Mode'} />
             </Box>
           }
           sx={{ ml: 1 }}
