@@ -333,5 +333,7 @@ export const generateFacts = (workouts: Workout[]): string[] => {
     facts.push('You have no recent workouts. Time to hit the gym!');
   }
 
+  facts.sort(() => Math.random() - 0.5);
+
   return facts;
 }
