@@ -397,7 +397,7 @@ const WorkoutPage: React.FC = () => {
                     type="number"
                     label="Weight"
                     value={set.weight}
-                    sx={{ maxWidth: '100px' }}
+                    sx={{ maxWidth: '75px' }}
                     onFocus={e => e.target.select()}
                     InputProps={{
                       inputProps: { min: 0 }
@@ -408,7 +408,7 @@ const WorkoutPage: React.FC = () => {
                     type="number"
                     label="Reps"
                     value={set.reps}
-                    sx={{ maxWidth: '100px' }}
+                    sx={{ maxWidth: '75px' }}
                     onFocus={e => e.target.select()}
                     InputProps={{
                       inputProps: { min: 0 }
@@ -416,9 +416,14 @@ const WorkoutPage: React.FC = () => {
                     error={set.reps === 0}
                     onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
                   />
-                  <Typography variant="body2" sx={{ minWidth: '80px', textAlign: 'center' }}>
-                    1RM: {calculateOneRepMax(set.weight, set.reps)}
-                  </Typography>
+                  <Box sx={{ minWidth: '60px', textAlign: 'center' }}>
+                    <Typography variant="body2">
+                      {calculateOneRepMax(set.weight, set.reps)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ lineHeight: 1, fontSize: 6 }}>
+                      E1RM
+                    </Typography>
+                  </Box>
                 </Box>
                 <IconButton onClick={() => removeSet(exerciseIndex, setIndex)} color="error" size="small">
                   <DeleteIcon />
