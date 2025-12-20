@@ -441,7 +441,7 @@ const WorkoutPage: React.FC = () => {
             >
               History
             </Button>
-            {exercise.sets.length === 0 && e1rmSuggestions[exercise.name] && (
+            {e1rmSuggestions[exercise.name] && (
               <Button
                 onClick={() => handleFeelingLucky(exerciseIndex)}
                 size="small"
