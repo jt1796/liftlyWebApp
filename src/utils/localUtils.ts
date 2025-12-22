@@ -21,6 +21,7 @@ export interface ExerciseDataPoint {
   date: Date;
   volume: number;
   estimatedOneRepMax: number;
+  maxWeight: number;
 }
 
 export interface PR {
@@ -170,6 +171,7 @@ export const calculateExerciseMetrics = (
         date: workout.date,
         volume,
         estimatedOneRepMax,
+        maxWeight: maxWeightSet.weight,
       });
     }
   });

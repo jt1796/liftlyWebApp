@@ -141,6 +141,25 @@ const RecordsPage = () => {
             ]}
             height={300}
           />
+          <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+            Max Weight Over Time
+          </Typography>
+          <LineChart
+            xAxis={[
+              {
+                data: exerciseData.map((d) => d.date),
+                scaleType: 'time',
+                valueFormatter: (date) => date.toLocaleDateString(),
+              },
+            ]}
+            series={[
+              {
+                data: exerciseData.map((d) => d.maxWeight),
+                label: 'Max Weight',
+              },
+            ]}
+            height={300}
+          />
         </Box>
       )}
 

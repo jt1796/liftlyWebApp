@@ -259,16 +259,19 @@ describe('localUtils', () => {
           {
             "date": 2023-01-01T00:00:00.000Z,
             "estimatedOneRepMax": 116,
+            "maxWeight": 105,
             "volume": 815,
           },
           {
             "date": 2023-01-05T00:00:00.000Z,
             "estimatedOneRepMax": 121,
+            "maxWeight": 110,
             "volume": 830,
           },
           {
             "date": 2023-01-10T00:00:00.000Z,
             "estimatedOneRepMax": 123,
+            "maxWeight": 115,
             "volume": 730,
           },
         ]
