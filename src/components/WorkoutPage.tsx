@@ -310,7 +310,7 @@ const WorkoutPage: React.FC = () => {
     setWorkout({ ...workout, exercises: newExercises });
   };
 
-  const handleFeelingLucky = (exerciseIndex: number) => {
+  const handleAddPRSet = (exerciseIndex: number) => {
     if (!workout) return;
     const exerciseName = workout.exercises[exerciseIndex].name;
     const targetE1RM = e1rmSuggestions[exerciseName];
@@ -443,12 +443,12 @@ const WorkoutPage: React.FC = () => {
             </Button>
             {e1rmSuggestions[exercise.name] && (
               <Button
-                onClick={() => handleFeelingLucky(exerciseIndex)}
+                onClick={() => handleAddPRSet(exerciseIndex)}
                 size="small"
                 variant="outlined"
                 disabled={isE1RMLoading}
               >
-                I'm Feeling Lucky
+                Add PR Set
               </Button>
             )}
           </CardActions>
