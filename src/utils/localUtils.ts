@@ -236,6 +236,14 @@ export const getE1RmSuggestions = (allWorkouts: Workout[], currentWorkout: Worko
         }
       }
     }
+
+    for (const set of exercise.sets) {
+      const e1rm = calculateOneRepMax(set.weight, set.reps);
+      if (e1rm > maxE1RMForExercise) {
+        maxE1RMForExercise = e1rm;
+      }
+    }
+
     if (maxE1RMForExercise > 0) {
       newE1RMSuggestions[exercise.name] = maxE1RMForExercise;
     }
