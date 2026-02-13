@@ -276,6 +276,7 @@ const WorkoutPage: React.FC = () => {
   const addExercise = () => {
     if (!workout) return;
     const newExercise: Exercise = {
+      id: Date.now().toString(),
       name: combinedExercises[0],
       sets: [],
     };
@@ -285,7 +286,7 @@ const WorkoutPage: React.FC = () => {
   const addSet = (exerciseIndex: number) => {
     if (!workout) return;
     const newExercises = [...workout.exercises];
-    const newSet: Set = { weight: 0, reps: 0 };
+    const newSet: Set = { id: Date.now().toString(), weight: 0, reps: 0 };
 
     const exerciseSets = newExercises[exerciseIndex].sets;
     if (exerciseSets.length > 0) {
@@ -373,7 +374,7 @@ const WorkoutPage: React.FC = () => {
       </Stack>
 
       {workout.exercises.map((exercise, exerciseIndex) => (
-        <Card key={exerciseIndex} sx={{ mt: 3 }}>
+        <Card key={exercise.id || exerciseIndex} sx={{ mt: 3 }}>
           <CardContent>
             <Stack direction="row" spacing={2} alignItems="center">
               <FormControl fullWidth>
@@ -391,7 +392,7 @@ const WorkoutPage: React.FC = () => {
             </Stack>
 
             {exercise.sets.map((set, setIndex) => (
-              <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={setIndex} justifyContent="space-between">
+              <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={set.id || setIndex} justifyContent="space-between">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <TextField
                     type="number"
