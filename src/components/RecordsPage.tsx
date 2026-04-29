@@ -20,6 +20,7 @@ import {
 import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/auth-context-utils';
+import WorkoutHeatmap from './WorkoutHeatmap';
 import {
   getWorkoutsForUser,
   calculateExerciseMetrics,
@@ -65,6 +66,13 @@ const RecordsPage = () => {
     return [];
   }, [workouts, selectedExercise]);
 
+  const filteredWorkouts = useMemo(() => {
+    if (!workouts || !selectedExercise) return [];
+    return workouts.filter((workout) =>
+      workout.exercises.some((exercise) => exercise.name === selectedExercise)
+    );
+  }, [workouts, selectedExercise]);
+
   const latestExercisePRs: LatestExercisePRs = useMemo(() => {
     if (workouts && selectedExercise) {
       return getLatestExercisePRs(workouts, selectedExercise);
@@ -101,9 +109,13 @@ const RecordsPage = () => {
 
       {selectedExercise && exerciseData.length > 0 && (
         <Box>
-          {latestExercisePRs.e1rm && <Chip label={latestExercisePRs.e1rm!.value + ' E1RM'} />}
-          {latestExercisePRs.maxWeight && <Chip label={latestExercisePRs.maxWeight!.value + ' Max Weight'} />}
-          <Typography variant="h5" gutterBottom>
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            {latestExercisePRs.e1rm && <Chip label={latestExercisePRs.e1rm!.value + ' E1RM'} />}
+            {latestExercisePRs.maxWeight && <Chip label={latestExercisePRs.maxWeight!.value + ' Max Weight'} />}
+          </Box>
+          <WorkoutHeatmap workouts={filteredWorkouts} />
+
+          <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
             Volume Over Time
           </Typography>
           <LineChart
