@@ -16,6 +16,7 @@ import {
   TableRow,
   Paper,
   Chip,
+  Link,
 } from '@mui/material';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery } from '@tanstack/react-query';
@@ -197,7 +198,16 @@ const RecordsPage = () => {
               <TableBody>
                 {recentPRs.filter(pr => !selectedExercise || (pr.exerciseName === selectedExercise)).map((pr, index) => (
                   <TableRow key={index}>
-                    <TableCell>{pr.exerciseName}</TableCell>
+                    <TableCell>
+                      <Link
+                        component="button"
+                        variant="body2"
+                        onClick={() => setSelectedExercise(pr.exerciseName)}
+                        sx={{ textAlign: 'left', verticalAlign: 'baseline' }}
+                      >
+                        {pr.exerciseName}
+                      </Link>
+                    </TableCell>
                     <TableCell>{pr.date.toLocaleDateString()}</TableCell>
                     <TableCell>
                       {pr.oldValue} {'→'} {pr.value}
