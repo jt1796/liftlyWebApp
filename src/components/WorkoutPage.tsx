@@ -304,7 +304,7 @@ const WorkoutPage: React.FC = () => {
   const handleCopyWorkout = (format: 'txt' | 'phpbb') => {
     if (!workout) return;
 
-    const fullWorkoutText = workoutToText(workout, format);
+    const fullWorkoutText = workoutToText(workout, format, allWorkouts || []);
     navigator.clipboard.writeText(fullWorkoutText).then(
       () => {
         setSnackbarMessage(`Workout copied as ${format.toUpperCase()}!`);

@@ -388,5 +388,19 @@ describe('localUtils', () => {
           - 150 x 1"
       `);
     });
+
+    it('should include PRs if allWorkouts is provided', () => {
+      const workoutWithPR = mockWorkouts[1]; // Bench Press 110x3 is a PR
+      const result = workoutToText(workoutWithPR, 'txt', mockWorkouts);
+      expect(result).toContain('PR! New Max Weight: 110 (was 105)');
+      expect(result).toContain('PR! New E1RM: 121 (was 117)');
+    });
+
+    it('should include PRs in phpBB format if allWorkouts is provided', () => {
+      const workoutWithPR = mockWorkouts[1];
+      const result = workoutToText(workoutWithPR, 'phpbb', mockWorkouts);
+      expect(result).toContain('[b]PR![/b] New Max Weight: 110 (was 105)');
+      expect(result).toContain('[b]PR![/b] New E1RM: 121 (was 117)');
+    });
   });
 });

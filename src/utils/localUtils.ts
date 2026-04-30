@@ -274,7 +274,9 @@ export const getExerciseHistory = (
   return history;
 };
 
-export const workoutToText = (workout: Workout, format: 'txt' | 'phpbb') => {
+export const workoutToText = (workout: Workout, format: 'txt' | 'phpbb', allWorkouts?: Workout[]) => {
+  const prs = allWorkouts ? calculateAllPRs(allWorkouts).filter(pr => pr.date.getTime() === workout.date.getTime()) : [];
+
   const workoutText = workout.exercises
     .map((exercise) => {
       const exerciseName =
@@ -284,7 +286,19 @@ export const workoutToText = (workout: Workout, format: 'txt' | 'phpbb') => {
       const sets = exercise.sets
         .map((set) => `  - ${set.weight} x ${set.reps}`)
         .join('\n');
-      return `${exerciseName}\n${sets}`;
+
+      const exercisePRs = prs.filter(pr => pr.exerciseName === exercise.name);
+      let prText = '';
+      if (exercisePRs.length > 0) {
+        const prStrings = exercisePRs.map(pr => {
+          const prefix = format === 'phpbb' ? '[b]PR![/b]' : 'PR!';
+          const detail = pr.oldValue ? ` (was ${pr.oldValue})` : '';
+          return `  ${prefix} New ${pr.type}: ${pr.value}${detail}`;
+        });
+        prText = '\n' + prStrings.join('\n');
+      }
+
+      return `${exerciseName}\n${sets}${prText}`;
     })
     .join('\n\n');
 
