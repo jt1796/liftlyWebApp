@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import type { Workout, Exercise } from '../types';
 import dayjs from 'dayjs';
+import { calculateOneRepMax } from '../utils/localUtils';
 
 interface ExerciseHistoryDialogProps {
   open: boolean;
@@ -49,7 +50,7 @@ const ExerciseHistoryDialog: React.FC<ExerciseHistoryDialogProps> = ({
       <DialogTitle>History for {exerciseName}</DialogTitle>
       <DialogContent>
         <TableContainer component={Paper}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Date</TableCell>
@@ -63,11 +64,14 @@ const ExerciseHistoryDialog: React.FC<ExerciseHistoryDialogProps> = ({
                     {dayjs(workout.date).format('YYYY-MM-DD')}
                   </TableCell>
                   <TableCell>
-                    {workout.exercise.sets.map((set, index) => (
-                      <div key={index}>
-                        {set.weight} x {set.reps}
-                      </div>
-                    ))}
+                    {workout.exercise.sets.map((set, index) => {
+                      const e1rm = calculateOneRepMax(set.weight, set.reps);
+                      return (
+                        <div key={index}>
+                          {set.weight} x {set.reps} {e1rm > 0 && `(${e1rm})`}
+                        </div>
+                      );
+                    })}
                   </TableCell>
                 </TableRow>
               ))}
