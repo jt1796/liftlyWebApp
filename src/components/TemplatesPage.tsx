@@ -326,7 +326,7 @@ const TemplatesPage = () => {
                   <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={setIndex}>
                     <TextField
                         type="number"
-                        label="Percentage (%)"
+                        label="1RM %"
                         value={set.weight}
                         sx={{ maxWidth: '120px' }}
                         InputProps={{ inputProps: { min: 0, max: 100 } }}
