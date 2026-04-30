@@ -30,7 +30,9 @@ import type { CustomExercise, Exercise, Set, Template } from '../types';
 import {
   createFilterOptions,
   getCustomExercises,
+  getLatestExercisePRs,
   getTemplates,
+  getWorkoutsForUser,
   saveTemplates,
 } from '../utils';
 
@@ -45,6 +47,7 @@ const TemplatesPage = () => {
   const queryClient = useQueryClient();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRmDialogOpen, setIsRmDialogOpen] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
@@ -53,6 +56,7 @@ const TemplatesPage = () => {
   const [editingTemplateIndex, setEditingTemplateIndex] = useState<number | null>(
     null
   );
+  const [rmsToUse, setRmsToUse] = useState<Record<string, number>>({});
 
   const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
     queryKey: ['templates', currentUser?.uid],
@@ -63,6 +67,12 @@ const TemplatesPage = () => {
   const { data: customExercises = [] } = useQuery({
     queryKey: ['custom-exercises', currentUser?.uid],
     queryFn: () => getCustomExercises(currentUser!.uid),
+    enabled: !!currentUser,
+  });
+
+  const { data: allWorkouts = [] } = useQuery({
+    queryKey: ['workouts', currentUser?.uid],
+    queryFn: () => getWorkoutsForUser(currentUser!.uid),
     enabled: !!currentUser,
   });
 
@@ -136,14 +146,32 @@ const TemplatesPage = () => {
     }
   };
 
-  const handleStartWorkout = (template: Template) => {
+  const handleStartWorkoutClick = (template: Template) => {
+    setSelectedTemplate(template);
+    const uniqueExercises = Array.from(new Set(template.exercises.map(e => e.name)));
+    const initialRms: Record<string, number> = {};
+    uniqueExercises.forEach(exName => {
+      const latestPRs = getLatestExercisePRs(allWorkouts, exName);
+      initialRms[exName] = latestPRs.e1rm?.value || 0;
+    });
+    setRmsToUse(initialRms);
+    setIsRmDialogOpen(true);
+  };
+
+  const handleConfirmStartWorkout = () => {
     const workoutFromTemplate = {
       date: new Date(),
-      exercises: template.exercises,
+      exercises: selectedTemplate.exercises.map(exercise => ({
+        ...exercise,
+        sets: exercise.sets.map(set => ({
+          ...set,
+          weight: Math.round((set.weight / 100) * (rmsToUse[exercise.name] || 0) / 5) * 5, // Round to nearest 5
+        }))
+      })),
     };
     localStorage.setItem('liftly-currentWorkout', JSON.stringify(workoutFromTemplate));
     navigate('/workout');
-  }
+  };
 
   const handleExerciseChange = (
     index: number,
@@ -241,7 +269,7 @@ const TemplatesPage = () => {
                 </Stack>
               </CardContent>
               <CardActions>
-                <Button size="small" onClick={() => handleStartWorkout(template)}>
+                <Button size="small" onClick={() => handleStartWorkoutClick(template)}>
                   Start Workout
                 </Button>
                 <Button size="small" onClick={() => handleOpenDialog(index)}>
@@ -298,10 +326,10 @@ const TemplatesPage = () => {
                   <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={setIndex}>
                     <TextField
                         type="number"
-                        label="Weight"
+                        label="Percentage (%)"
                         value={set.weight}
-                        sx={{ maxWidth: '100px' }}
-                        InputProps={{ inputProps: { min: 0 } }}
+                        sx={{ maxWidth: '120px' }}
+                        InputProps={{ inputProps: { min: 0, max: 100 } }}
                         onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseFloat(e.target.value))}
                     />
                     <TextField
@@ -334,6 +362,32 @@ const TemplatesPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={isRmDialogOpen} onClose={() => setIsRmDialogOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Enter 1RMs for Workout</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Enter your current 1 Rep Max for each exercise to calculate the weights for this session.
+          </Typography>
+          <Stack spacing={2}>
+            {Object.keys(rmsToUse).map(exName => (
+              <TextField
+                key={exName}
+                label={`${exName} 1RM`}
+                type="number"
+                value={rmsToUse[exName]}
+                onChange={(e) => setRmsToUse({ ...rmsToUse, [exName]: parseFloat(e.target.value) || 0 })}
+                fullWidth
+              />
+            ))}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsRmDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmStartWorkout} variant="contained">Start</Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar open={showSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}
