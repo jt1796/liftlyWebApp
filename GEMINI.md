@@ -33,7 +33,7 @@ The project follows a standard React application structure:
     *   `components/`: Contains reusable React components.
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
         *   `LoginPage.tsx`: Handles user authentication.
-        *   `WorkoutPage.tsx`: Core component for creating and editing workouts.
+        *   `WorkoutPage.tsx`: Core component for creating and editing workouts. Supports drag-and-drop re-ordering of exercises and sets.
         *   `WorkoutListPage.tsx`: A component for listing workouts
         *   `ExercisesPage.tsx`: A component for managing custom exercises.
         *   `TemplatesPage.tsx`: A component for creating and managing workout templates. Templates use percentage-based weights (relative to 1RM). When starting a workout from a template, the user is prompted to enter their 1RMs, which are then used to calculate the session's weights.

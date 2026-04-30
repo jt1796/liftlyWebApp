@@ -24,6 +24,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import HistoryIcon from '@mui/icons-material/History';
 import AddIcon from '@mui/icons-material/Add';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 import {
   getWorkoutById,
   calculateOneRepMax,
@@ -46,6 +49,22 @@ import type { CustomExercise } from '../types';
 import ExerciseHistoryDialog from './ExerciseHistoryDialog';
 
 const localStorageKey = 'liftly-currentWorkout';
+
+const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+const ensureIds = (workoutData: Workout): Workout => {
+  return {
+    ...workoutData,
+    exercises: workoutData.exercises.map((ex) => ({
+      ...ex,
+      id: ex.id || generateId(),
+      sets: ex.sets.map((set) => ({
+        ...set,
+        id: set.id || generateId(),
+      })),
+    })),
+  };
+};
 
 const WorkoutPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -88,10 +107,55 @@ const WorkoutPage: React.FC = () => {
 
   const filterExerciseOptions = useMemo(() => createFilterOptions(combinedExercises), [combinedExercises]);
 
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, type } = result;
+
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    if (!workout) return;
+
+    const newExercises = Array.from(workout.exercises);
+
+    if (type === 'exercise') {
+      const [removed] = newExercises.splice(source.index, 1);
+      newExercises.splice(destination.index, 0, removed);
+      setWorkout({ ...workout, exercises: newExercises });
+    } else {
+      // It's a set
+      const sourceExerciseId = source.droppableId.replace('sets-', '');
+      const destExerciseId = destination.droppableId.replace('sets-', '');
+
+      const sourceExIndex = newExercises.findIndex(ex => ex.id === sourceExerciseId);
+      const destExIndex = newExercises.findIndex(ex => ex.id === destExerciseId);
+
+      if (sourceExIndex === -1 || destExIndex === -1) return;
+
+      const sourceSets = Array.from(newExercises[sourceExIndex].sets);
+      const destSets = sourceExIndex === destExIndex ? sourceSets : Array.from(newExercises[destExIndex].sets);
+
+      const [removed] = sourceSets.splice(source.index, 1);
+      destSets.splice(destination.index, 0, removed);
+
+      newExercises[sourceExIndex] = { ...newExercises[sourceExIndex], sets: sourceSets };
+      if (sourceExIndex !== destExIndex) {
+        newExercises[destExIndex] = { ...newExercises[destExIndex], sets: destSets };
+      }
+
+      setWorkout({ ...workout, exercises: newExercises });
+    }
+  };
+
   useEffect(() => {
     if (id) {
       if (fetchedWorkout) {
-        setWorkout(fetchedWorkout);
+        setWorkout(ensureIds(fetchedWorkout));
       }
     } else {
       try {
@@ -107,7 +171,7 @@ const WorkoutPage: React.FC = () => {
           } else {
             parsedWorkout.date = storedDate;
           }
-          setWorkout(parsedWorkout as Workout);
+          setWorkout(ensureIds(parsedWorkout as Workout));
         } else {
           setWorkout({
             date: new Date(),
@@ -276,7 +340,7 @@ const WorkoutPage: React.FC = () => {
   const addExercise = () => {
     if (!workout) return;
     const newExercise: Exercise = {
-      id: Date.now().toString(),
+      id: generateId(),
       name: combinedExercises[0],
       sets: [],
     };
@@ -286,7 +350,7 @@ const WorkoutPage: React.FC = () => {
   const addSet = (exerciseIndex: number) => {
     if (!workout) return;
     const newExercises = [...workout.exercises];
-    const newSet: Set = { id: Date.now().toString(), weight: 0, reps: 0 };
+    const newSet: Set = { id: generateId(), weight: 0, reps: 0 };
 
     const exerciseSets = newExercises[exerciseIndex].sets;
     if (exerciseSets.length > 0) {
@@ -320,7 +384,8 @@ const WorkoutPage: React.FC = () => {
       const suggestedSet = findSetToPR(targetE1RM);
       if (suggestedSet) {
         const newExercises = [...workout.exercises];
-        newExercises[exerciseIndex].sets.push(suggestedSet);
+        const newSetWithId = { ...suggestedSet, id: generateId() };
+        newExercises[exerciseIndex].sets.push(newSetWithId);
         setWorkout({ ...workout, exercises: newExercises });
       }
     }
@@ -373,88 +438,130 @@ const WorkoutPage: React.FC = () => {
         </LocalizationProvider>
       </Stack>
 
-      {workout.exercises.map((exercise, exerciseIndex) => (
-        <Card key={exercise.id || exerciseIndex} sx={{ mt: 3 }}>
-          <CardContent>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <FormControl fullWidth>
-                <Autocomplete
-                  value={exercise.name}
-                  options={combinedExercises}
-                  filterOptions={filterExerciseOptions}
-                  onChange={(_, value) => handleExerciseChange(exerciseIndex, 'name', value!)}
-                  renderInput={(params) => <TextField {...params} label="Exercise" />}
-                />
-              </FormControl>
-              <IconButton onClick={() => removeExercise(exerciseIndex)} color="error" size="small">
-                <DeleteIcon />
-              </IconButton>
-            </Stack>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="exercises" type="exercise">
+          {(provided) => (
+            <Box {...provided.droppableProps} ref={provided.innerRef}>
+              {workout.exercises.map((exercise, exerciseIndex) => (
+                <Draggable key={exercise.id} draggableId={exercise.id!} index={exerciseIndex}>
+                  {(provided) => (
+                    <Card
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      sx={{ mt: 3 }}
+                    >
+                      <CardContent>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <Box {...provided.dragHandleProps} sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', ml: -1 }}>
+                            <DragIndicatorIcon color="action" />
+                          </Box>
+                          <FormControl fullWidth>
+                            <Autocomplete
+                              value={exercise.name}
+                              options={combinedExercises}
+                              filterOptions={filterExerciseOptions}
+                              onChange={(_, value) => handleExerciseChange(exerciseIndex, 'name', value!)}
+                              renderInput={(params) => <TextField {...params} label="Exercise" />}
+                            />
+                          </FormControl>
+                          <IconButton onClick={() => removeExercise(exerciseIndex)} color="error" size="small">
+                            <DeleteIcon />
+                          </IconButton>
+                        </Stack>
 
-            {exercise.sets.map((set, setIndex) => (
-              <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={set.id || setIndex} justifyContent="space-between">
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <TextField
-                    type="number"
-                    label="Weight"
-                    value={set.weight}
-                    sx={{ maxWidth: '75px' }}
-                    onFocus={e => e.target.select()}
-                    InputProps={{
-                      inputProps: { min: 0 }
-                    }}
-                    onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseFloat(e.target.value))}
-                  />
-                  <TextField
-                    type="number"
-                    label="Reps"
-                    value={set.reps}
-                    sx={{ maxWidth: '75px' }}
-                    onFocus={e => e.target.select()}
-                    InputProps={{
-                      inputProps: { min: 0 }
-                    }}
-                    error={set.reps === 0}
-                    onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
-                  />
-                  <Box sx={{ minWidth: '60px', textAlign: 'center' }}>
-                    <Typography variant="body2">
-                      {calculateOneRepMax(set.weight, set.reps)}
-                    </Typography>
-                    <Typography variant="caption" sx={{ lineHeight: 1, fontSize: 6 }}>
-                      E1RM
-                    </Typography>
-                  </Box>
-                </Box>
-                <IconButton onClick={() => removeSet(exerciseIndex, setIndex)} color="error" size="small">
-                  <DeleteIcon />
-                </IconButton>
-              </Stack>
-            ))}
-          </CardContent>
-          <CardActions>
-            <Button onClick={() => addSet(exerciseIndex)} size="small" startIcon={<AddIcon />}>Add Set</Button>
-            <Button
-              onClick={() => handleShowHistory(exercise.name)}
-              size="small"
-              disabled={!allWorkouts}
-              startIcon={<HistoryIcon />}
-            >
-              History
-            </Button>
-            {e1rmSuggestions[exercise.name] && (
-              <Button
-                onClick={() => handleAddPRSet(exerciseIndex)}
-                size="small"
-                variant="outlined"
-                disabled={isE1RMLoading}
-              >
-                Add PR Set
-              </Button>
-            )}
-          </CardActions>
-        </Card>
-      ))}
+                        <Droppable droppableId={`sets-${exercise.id}`} type="set">
+                          {(provided) => (
+                            <Box {...provided.droppableProps} ref={provided.innerRef} sx={{ minHeight: '10px' }}>
+                              {exercise.sets.map((set, setIndex) => (
+                                <Draggable key={set.id} draggableId={set.id!} index={setIndex}>
+                                  {(provided) => (
+                                    <Stack
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      direction="row"
+                                      spacing={2}
+                                      alignItems="center"
+                                      sx={{ mt: 2 }}
+                                      justifyContent="space-between"
+                                    >
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Box {...provided.dragHandleProps} sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', ml: -1 }}>
+                                          <DragIndicatorIcon fontSize="small" color="action" />
+                                        </Box>
+                                        <TextField
+                                          type="number"
+                                          label="Weight"
+                                          value={set.weight}
+                                          sx={{ maxWidth: '75px' }}
+                                          onFocus={e => e.target.select()}
+                                          InputProps={{
+                                            inputProps: { min: 0 }
+                                          }}
+                                          onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseFloat(e.target.value))}
+                                        />
+                                        <TextField
+                                          type="number"
+                                          label="Reps"
+                                          value={set.reps}
+                                          sx={{ maxWidth: '75px' }}
+                                          onFocus={e => e.target.select()}
+                                          InputProps={{
+                                            inputProps: { min: 0 }
+                                          }}
+                                          error={set.reps === 0}
+                                          onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
+                                        />
+                                        <Box sx={{ minWidth: '60px', textAlign: 'center' }}>
+                                          <Typography variant="body2">
+                                            {calculateOneRepMax(set.weight, set.reps)}
+                                          </Typography>
+                                          <Typography variant="caption" sx={{ lineHeight: 1, fontSize: 6 }}>
+                                            E1RM
+                                          </Typography>
+                                        </Box>
+                                      </Box>
+                                      <IconButton onClick={() => removeSet(exerciseIndex, setIndex)} color="error" size="small">
+                                        <DeleteIcon />
+                                      </IconButton>
+                                    </Stack>
+                                  )}
+                                </Draggable>
+                              ))}
+                              {provided.placeholder}
+                            </Box>
+                          )}
+                        </Droppable>
+                      </CardContent>
+                      <CardActions>
+                        <Button onClick={() => addSet(exerciseIndex)} size="small" startIcon={<AddIcon />}>Add Set</Button>
+                        <Button
+                          onClick={() => handleShowHistory(exercise.name)}
+                          size="small"
+                          disabled={!allWorkouts}
+                          startIcon={<HistoryIcon />}
+                        >
+                          History
+                        </Button>
+                        {e1rmSuggestions[exercise.name] && (
+                          <Button
+                            onClick={() => handleAddPRSet(exerciseIndex)}
+                            size="small"
+                            variant="outlined"
+                            disabled={isE1RMLoading}
+                          >
+                            Add PR Set
+                          </Button>
+                        )}
+                      </CardActions>
+                    </Card>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </Box>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       <Box sx={{ mt: 3 }}>
         <Button onClick={addExercise} variant="outlined">Add Exercise</Button>
