@@ -24,6 +24,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useAuth } from '../contexts/auth-context-utils';
 import { exercises as exerciseList } from '../data/exercises';
 import type { CustomExercise, Exercise, Set, Template } from '../types';
@@ -35,6 +37,23 @@ import {
   getWorkoutsForUser,
   saveTemplates,
 } from '../utils';
+
+const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+const ensureIds = (templates: Template[]): Template[] => {
+  return templates.map((template) => ({
+    ...template,
+    id: template.id || generateId(),
+    exercises: template.exercises.map((ex) => ({
+      ...ex,
+      id: ex.id || generateId(),
+      sets: ex.sets.map((set) => ({
+        ...set,
+        id: set.id || generateId(),
+      })),
+    })),
+  }));
+};
 
 const emptyTemplate: Template = {
   name: '',
@@ -60,9 +79,31 @@ const TemplatesPage = () => {
 
   const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
     queryKey: ['templates', currentUser?.uid],
-    queryFn: () => getTemplates(currentUser!.uid),
+    queryFn: async () => {
+      const fetched = await getTemplates(currentUser!.uid);
+      return ensureIds(fetched);
+    },
     enabled: !!currentUser,
   });
+
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const newTemplates = Array.from(templates);
+    const [removed] = newTemplates.splice(source.index, 1);
+    newTemplates.splice(destination.index, 0, removed);
+
+    mutation.mutate(newTemplates);
+  };
 
   const { data: customExercises = [] } = useQuery({
     queryKey: ['custom-exercises', currentUser?.uid],
@@ -86,20 +127,39 @@ const TemplatesPage = () => {
   const filterExerciseOptions = useMemo(() => createFilterOptions(combinedExercises), [combinedExercises]);
 
   const mutation = useMutation({
-    mutationFn: (updatedTemplates: Template[]) =>
-      saveTemplates(currentUser!.uid, updatedTemplates),
+    mutationFn: async (updatedTemplates: Template[]) => {
+      await saveTemplates(currentUser!.uid, updatedTemplates);
+    },
+    onMutate: async (updatedTemplates) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['templates', currentUser?.uid] });
+
+      // Snapshot the previous value
+      const previousTemplates = queryClient.getQueryData<Template[]>(['templates', currentUser?.uid]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['templates', currentUser?.uid], updatedTemplates);
+
+      // Return a context object with the snapshotted value
+      return { previousTemplates };
+    },
+    onError: (error, _updatedTemplates, context) => {
+      console.error('Error saving templates:', error);
+      if (context?.previousTemplates) {
+        queryClient.setQueryData(['templates', currentUser?.uid], context.previousTemplates);
+      }
+      setSnackbarMessage('Error saving templates.');
+      setSnackbarSeverity('error');
+      setShowSnackbar(true);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['templates', currentUser?.uid] });
       setSnackbarMessage('Templates saved successfully!');
       setSnackbarSeverity('success');
       setShowSnackbar(true);
       setIsDialogOpen(false);
     },
-    onError: (error) => {
-      console.error('Error saving templates:', error);
-      setSnackbarMessage('Error saving templates.');
-      setSnackbarSeverity('error');
-      setShowSnackbar(true);
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates', currentUser?.uid] });
     },
   });
 
@@ -130,11 +190,15 @@ const TemplatesPage = () => {
     }
 
     const newTemplates = [...templates];
+    const templateToSave = {
+      ...selectedTemplate,
+      id: selectedTemplate.id || generateId(),
+    };
 
     if (editingTemplateIndex !== null) {
-      newTemplates[editingTemplateIndex] = selectedTemplate;
+      newTemplates[editingTemplateIndex] = templateToSave;
     } else {
-      newTemplates.push(selectedTemplate);
+      newTemplates.push(templateToSave);
     }
     mutation.mutate(newTemplates);
   };
@@ -198,6 +262,7 @@ const TemplatesPage = () => {
 
   const addExercise = () => {
     const newExercise: Exercise = {
+      id: generateId(),
       name: combinedExercises[0],
       sets: [],
     };
@@ -209,10 +274,10 @@ const TemplatesPage = () => {
 
   const addSet = (exerciseIndex: number) => {
     const newExercises = [...selectedTemplate.exercises];
-    const newSet: Set = { weight: 0, reps: 0 };
+    const newSet: Set = { id: generateId(), weight: 0, reps: 0 };
     const exerciseSets = newExercises[exerciseIndex].sets;
     if (exerciseSets.length > 0) {
-        newSet.weight = exerciseSets[exerciseSets.length - 1].weight;
+      newSet.weight = exerciseSets[exerciseSets.length - 1].weight;
     }
     newExercises[exerciseIndex].sets.push(newSet);
     setSelectedTemplate({ ...selectedTemplate, exercises: newExercises });
@@ -248,44 +313,71 @@ const TemplatesPage = () => {
       {isLoadingTemplates ? (
         <CircularProgress />
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {templates.map((template, index) => (
-            <Card key={`${template.name}-${index}`} variant="outlined">
-              <CardContent>
-                <Typography variant="h5" component="div">
-                  {template.name}
-                </Typography>
-                <Stack direction="row" alignItems="center" flexWrap="wrap" spacing={1} sx={{ mt: 1.5 }}>
-                  <Typography color="text.secondary">
-                    Exercises:
-                  </Typography>
-                  {template.exercises.map((exercise, exerciseIndex) => (
-                    <Chip
-                      key={`${exercise.name}-${exerciseIndex}`}
-                      label={exercise.name}
-                      size="small"
-                    />
-                  ))}
-                </Stack>
-              </CardContent>
-              <CardActions>
-                <Button size="small" onClick={() => handleStartWorkoutClick(template)}>
-                  Start Workout
-                </Button>
-                <Button size="small" onClick={() => handleOpenDialog(index)}>
-                  Edit
-                </Button>
-                <IconButton
-                  size="small"
-                  onClick={() => handleDeleteTemplate(index)}
-                  color="error"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </CardActions>
-            </Card>
-          ))}
-        </Box>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="templates">
+            {(provided) => (
+              <Box
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+              >
+                {templates.map((template, index) => (
+                  <Draggable key={template.id} draggableId={template.id!} index={index}>
+                    {(provided) => (
+                      <Card
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        variant="outlined"
+                      >
+                        <CardContent sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                          <Box
+                            {...provided.dragHandleProps}
+                            sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', mt: 0.5 }}
+                          >
+                            <DragIndicatorIcon color="action" />
+                          </Box>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="h5" component="div">
+                              {template.name}
+                            </Typography>
+                            <Stack direction="row" alignItems="center" flexWrap="wrap" spacing={1} sx={{ mt: 1.5 }}>
+                              <Typography color="text.secondary">
+                                Exercises:
+                              </Typography>
+                              {template.exercises.map((exercise) => (
+                                <Chip
+                                  key={exercise.id}
+                                  label={exercise.name}
+                                  size="small"
+                                />
+                              ))}
+                            </Stack>
+                          </Box>
+                        </CardContent>
+                        <CardActions>
+                          <Button size="small" onClick={() => handleStartWorkoutClick(template)}>
+                            Start Workout
+                          </Button>
+                          <Button size="small" onClick={() => handleOpenDialog(index)}>
+                            Edit
+                          </Button>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeleteTemplate(index)}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </CardActions>
+                      </Card>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </Box>
+            )}
+          </Droppable>
+        </DragDropContext>
       )}
 
       <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="md">
@@ -306,7 +398,7 @@ const TemplatesPage = () => {
             sx={{mb: 2}}
           />
           {selectedTemplate.exercises.map((exercise, exerciseIndex) => (
-            <Card key={exerciseIndex} sx={{ mt: 2 }}>
+            <Card key={exercise.id || exerciseIndex} sx={{ mt: 2 }}>
               <CardContent>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <FormControl fullWidth>
@@ -323,7 +415,7 @@ const TemplatesPage = () => {
                   </IconButton>
                 </Stack>
                 {exercise.sets.map((set, setIndex) => (
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={setIndex}>
+                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={set.id || setIndex}>
                     <TextField
                         type="number"
                         label="1RM %"
