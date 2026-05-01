@@ -25,6 +25,8 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import EditIcon from '@mui/icons-material/Edit';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useAuth } from '../contexts/auth-context-utils';
 import { exercises as exerciseList } from '../data/exercises';
@@ -306,10 +308,7 @@ const TemplatesPage = () => {
   };
 
   return (
-    <Container sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Workout Templates
-      </Typography>
+    <Container sx={{ mt: 2, mb: 4 }}>
       {isLoadingTemplates ? (
         <CircularProgress />
       ) : (
@@ -319,7 +318,7 @@ const TemplatesPage = () => {
               <Box
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
               >
                 {templates.map((template, index) => (
                   <Draggable key={template.id} draggableId={template.id!} index={index}>
@@ -329,46 +328,57 @@ const TemplatesPage = () => {
                         {...provided.draggableProps}
                         variant="outlined"
                       >
-                        <CardContent sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, '&:last-child': { pb: 1 } }}>
                           <Box
                             {...provided.dragHandleProps}
-                            sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', mt: 0.5 }}
+                            sx={{ display: 'flex', alignItems: 'center', cursor: 'grab' }}
                           >
                             <DragIndicatorIcon color="action" />
                           </Box>
-                          <Box sx={{ flexGrow: 1 }}>
-                            <Typography variant="h5" component="div">
+                          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                            <Typography variant="subtitle1" component="div" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
                               {template.name}
                             </Typography>
-                            <Stack direction="row" alignItems="center" flexWrap="wrap" spacing={1} sx={{ mt: 1.5 }}>
-                              <Typography color="text.secondary">
-                                Exercises:
+                            <Stack direction="row" alignItems="center" flexWrap="wrap" spacing={0.5} sx={{ mt: 0.25 }}>
+                              <Typography variant="caption" color="text.secondary">
+                                Ex:
                               </Typography>
                               {template.exercises.map((exercise) => (
                                 <Chip
                                   key={exercise.id}
                                   label={exercise.name}
                                   size="small"
+                                  sx={{ height: 20, fontSize: '0.75rem' }}
                                 />
                               ))}
                             </Stack>
                           </Box>
+                          <Stack direction="row" spacing={0.5}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleStartWorkoutClick(template)}
+                              color="primary"
+                              title="Start Workout"
+                            >
+                              <PlayArrowIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenDialog(index)}
+                              title="Edit Template"
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteTemplate(index)}
+                              color="error"
+                              title="Delete Template"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Stack>
                         </CardContent>
-                        <CardActions>
-                          <Button size="small" onClick={() => handleStartWorkoutClick(template)}>
-                            Start Workout
-                          </Button>
-                          <Button size="small" onClick={() => handleOpenDialog(index)}>
-                            Edit
-                          </Button>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDeleteTemplate(index)}
-                            color="error"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </CardActions>
                       </Card>
                     )}
                   </Draggable>
