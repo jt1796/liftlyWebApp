@@ -8,6 +8,7 @@ import WorkoutPage from './components/WorkoutPage';
 import RecordsPage from './components/RecordsPage';
 import ExercisesPage from './components/ExercisesPage';
 import TemplatesPage from './components/TemplatesPage';
+import ScriptsPage from './components/ScriptsPage';
 import ErrorPage from './components/ErrorPage';
 import Dashboard from './components/Dashboard';
 import {
@@ -40,6 +41,7 @@ function App() {
             <Route path="/records" element={<RecordsPage />} />
             <Route path="/exercises" element={<ExercisesPage />} />
             <Route path="/templates" element={<TemplatesPage />} />
+            <Route path="/scripts" element={<ScriptsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

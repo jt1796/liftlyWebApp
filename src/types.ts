@@ -25,3 +25,10 @@ export interface Template {
   name: string;
   exercises: Exercise[];
 }
+
+export interface Script {
+  id?: string;
+  name: string;
+  code: string;
+  lastExecutionMessage: string;
+}

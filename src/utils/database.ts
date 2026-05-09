@@ -1,6 +1,6 @@
 import { collection, doc, getDoc, setDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { CustomExercise, Workout, Template } from '../types';
+import type { CustomExercise, Workout, Template, Script } from '../types';
 
 const getCustomExercisesCollection = () => collection(db, 'customExercises');
 
@@ -75,4 +75,22 @@ export const getTemplates = async (userId: string): Promise<Template[]> => {
 export const saveTemplates = async (userId: string, templates: Template[]) => {
   const docRef = doc(getTemplatesCollection(), userId);
   await setDoc(docRef, { templates });
+};
+
+const getScriptsCollection = () => collection(db, 'scripts');
+
+export const getScripts = async (userId: string): Promise<Script[]> => {
+  const docRef = doc(getScriptsCollection(), userId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return docSnap.data().scripts;
+  } else {
+    return [];
+  }
+};
+
+export const saveScripts = async (userId: string, scripts: Script[]) => {
+  const docRef = doc(getScriptsCollection(), userId);
+  await setDoc(docRef, { scripts });
 };

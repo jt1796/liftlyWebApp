@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "liftly-9f56a"
-  }
+    "default": "liftly-9f56a",
+    "prod": "liftly-9f56a"
+  },
+  "targets": {},
+  "etags": {}
 }

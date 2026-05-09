@@ -26,17 +26,19 @@ The project follows a standard React application structure:
 
 *   `public/`: Contains static assets like `index.html` and icons.
     *   `src/`: Contains the main application source code.
-    *   `types.ts`: Defines TypeScript interfaces for data structures like `Set`, `Exercise`, `Workout`, `CustomExercise`, and `Template`.
+    *   `types.ts`: Defines TypeScript interfaces for data structures like `Set`, `Exercise`, `Workout`, `CustomExercise`, `Template`, and `Script`.
     *   `utils/`: Contains utility functions.
-        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data, and workout templates.
+        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data, workout templates, and user scripts.
+        *   `scriptExecutor.ts`: Executes user-provided JavaScript snippets in a Web Worker sandbox to generate new workouts based on history.
         *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs), analyzing exercise metrics, generating E1RM suggestions, converting workout data to text and getting exercise history.
     *   `components/`: Contains reusable React components.
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
         *   `LoginPage.tsx`: Handles user authentication.
         *   `WorkoutPage.tsx`: Core component for creating and editing workouts. Supports drag-and-drop re-ordering of exercises and sets.
-        *   `WorkoutListPage.tsx`: A component for listing workouts
+        *   `WorkoutListPage.tsx`: A component for listing workouts.
         *   `ExercisesPage.tsx`: A component for managing custom exercises.
-        *   `TemplatesPage.tsx`: A component for creating and managing workout templates. The UI is highly optimized for vertical space, using icons for actions (Start, Edit, Delete) placed alongside the exercise list. Templates use percentage-based weights (relative to 1RM). When starting a workout from a template, the user is prompted to enter their 1RMs, which are then used to calculate the session's weights.
+        *   `TemplatesPage.tsx`: A component for creating and managing workout templates.
+        *   `ScriptsPage.tsx`: A component for creating and managing user-defined JavaScript snippets. Supports script execution to generate new workouts. Features an enhanced debug mode that generates 25 sequential workouts, passing state between them, and displays the results in a summary table.
         *   `ProtectedLayout.tsx`: A component that guards routes that require authentication.
         *   `ExerciseHistoryDialog.tsx`: A component for showing the history of a given exercise.
     *   `contexts/`: Contains React contexts for managing application-wide state.
