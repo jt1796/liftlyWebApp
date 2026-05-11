@@ -24,13 +24,14 @@ import {
   Typography,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth-context-utils';
+import { useApp } from '../contexts/app-context-utils';
 import type { Script, Workout } from '../types';
 import {
   getScripts,
@@ -39,6 +40,8 @@ import {
   executeScript,
   type ScriptExecutionResult
 } from '../utils';
+
+const Editor = lazy(() => import('@monaco-editor/react'));
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -79,6 +82,7 @@ Example output: return (workoutHistory, lastExecutionMessage) => { ... }
 
 const ScriptsPage = () => {
   const { currentUser } = useAuth();
+  const { darkMode } = useApp();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -349,25 +353,33 @@ const ScriptsPage = () => {
             }
             sx={{ mb: 2 }}
           />
-          <TextField
-            label="JavaScript Code"
-            multiline
-            rows={15}
-            fullWidth
-            variant="outlined"
-            value={selectedScript.code}
-            onChange={(e) =>
-              setSelectedScript({ ...selectedScript, code: e.target.value })
-            }
-            slotProps={{
-              input: {
-                sx: {
-                  fontFamily: 'monospace',
-                  fontSize: '0.875rem',
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            JavaScript Code
+          </Typography>
+          <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+            <Suspense fallback={
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+                <CircularProgress />
+              </Box>
+            }>
+              <Editor
+                height="400px"
+                defaultLanguage="javascript"
+                value={selectedScript.code}
+                theme={darkMode === 'dark' ? 'vs-dark' : 'light'}
+                onChange={(value) =>
+                  setSelectedScript({ ...selectedScript, code: value || '' })
                 }
-              }
-            }}
-          />
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  tabSize: 2,
+                }}
+              />
+            </Suspense>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
