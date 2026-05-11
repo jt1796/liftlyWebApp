@@ -62,7 +62,7 @@ create javascript code that returns a function that generates the next <name of 
 - first parameter: the workout history of the user, and 
 - second parameter: lastExecutionMessage, output from the last time this script was executed. Can be used to keep track of which day the program is on
 
-workout type structure:
+workout type structure. don't add any extra fields:
 {
   date: new Date(),
   exercises: [{
@@ -140,7 +140,6 @@ const getNextStartingStrengthWorkout = (workoutHistory, lastExecutionMessage) =>
   return {
     nextWorkout: {
       date: new Date().toISOString().split('T')[0], // Returns YYYY-MM-DD
-      type: nextType,
       exercises: nextExercises
     },
     lastExecutionMessage: \`Workout \${nextType}\`

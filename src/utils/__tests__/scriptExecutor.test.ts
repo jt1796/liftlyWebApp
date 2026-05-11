@@ -252,6 +252,61 @@ describe('scriptExecutor worker logic details', () => {
     await expect(executeScript(script, mockHistory)).rejects.toThrow();
   });
 
+  describe('strict validation of unknown fields', () => {
+    it('should throw if root object has unknown field', async () => {
+      const script = {
+        id: '1',
+        name: 'Extra Field',
+        code: 'return { nextWorkout: { exercises: [] }, lastExecutionMessage: "ok", extra: "field" };',
+        lastExecutionMessage: ''
+      };
+      await expect(executeScript(script, mockHistory)).rejects.toThrow('Result object has unknown field: "extra"');
+    });
+
+    it('should throw if workout has unknown field', async () => {
+      const script = {
+        id: '1',
+        name: 'Extra Workout Field',
+        code: 'return { nextWorkout: { exercises: [], extra: "field" }, lastExecutionMessage: "ok" };',
+        lastExecutionMessage: ''
+      };
+      await expect(executeScript(script, mockHistory)).rejects.toThrow('property "nextWorkout" has unknown field: "extra"');
+    });
+
+    it('should throw if exercise has unknown field', async () => {
+      const script = {
+        id: '1',
+        name: 'Extra Exercise Field',
+        code: 'return { nextWorkout: { exercises: [{ name: "Ex", sets: [], extra: "field" }] }, lastExecutionMessage: "ok" };',
+        lastExecutionMessage: ''
+      };
+      await expect(executeScript(script, mockHistory)).rejects.toThrow('Exercise at index 0 ("Ex") has unknown field: "extra"');
+    });
+
+    it('should throw if set has unknown field', async () => {
+      const script = {
+        id: '1',
+        name: 'Extra Set Field',
+        code: 'return { nextWorkout: { exercises: [{ name: "Ex", sets: [{ weight: 100, reps: 5, extra: "field" }] }] }, lastExecutionMessage: "ok" };',
+        lastExecutionMessage: ''
+      };
+      await expect(executeScript(script, mockHistory)).rejects.toThrow('Set 0 of exercise "Ex" has unknown field: "extra"');
+    });
+
+    it('should allow "id" field in workout, exercise, and set', async () => {
+      const script = {
+        id: '1',
+        name: 'IDs included',
+        code: 'return { nextWorkout: { id: "w1", exercises: [{ id: "e1", name: "Ex", sets: [{ id: "s1", weight: 100, reps: 5 }] }] }, lastExecutionMessage: "ok" };',
+        lastExecutionMessage: ''
+      };
+      const result = await executeScript(script, mockHistory);
+      expect(result.workout.id).toBe('w1');
+      expect(result.workout.exercises[0].id).toBe('e1');
+      expect(result.workout.exercises[0].sets[0].id).toBe('s1');
+    });
+  });
+
   it('should correctly execute a Starting Strength (Phase 1) progression over 6 workouts', async () => {
     const ssScriptCode = `
       const historyArg = arguments[0];

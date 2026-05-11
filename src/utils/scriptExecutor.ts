@@ -38,11 +38,33 @@ export const executeScript = async (
 
     const validateWorkout = (w, context = 'Workout') => {
       if (!w || typeof w !== 'object') throw new Error(\`\${context} must be an object\`);
+      
+      const allowedWorkoutKeys = ['exercises', 'date', 'id'];
+      Object.keys(w).forEach(key => {
+        if (!allowedWorkoutKeys.includes(key)) {
+          throw new Error(\`\${context} has unknown field: "\${key}"\`);
+        }
+      });
+
       if (!Array.isArray(w.exercises)) throw new Error(\`\${context} must have an "exercises" array\`);
       w.exercises.forEach((ex, i) => {
+        const allowedExerciseKeys = ['name', 'sets', 'id'];
+        Object.keys(ex).forEach(key => {
+          if (!allowedExerciseKeys.includes(key)) {
+            throw new Error(\`Exercise at index \${i} ("\${ex.name || 'unknown'}") has unknown field: "\${key}"\`);
+          }
+        });
+
         if (!ex.name || typeof ex.name !== 'string') throw new Error(\`Exercise at index \${i} must have a name string\`);
         if (!Array.isArray(ex.sets)) throw new Error(\`Exercise "\${ex.name}" (index \${i}) must have a "sets" array\`);
         ex.sets.forEach((set, si) => {
+          const allowedSetKeys = ['weight', 'reps', 'id'];
+          Object.keys(set).forEach(key => {
+            if (!allowedSetKeys.includes(key)) {
+              throw new Error(\`Set \${si} of exercise "\${ex.name}" has unknown field: "\${key}"\`);
+            }
+          });
+
           if (typeof set.weight !== 'number') throw new Error(\`Set \${si} of exercise "\${ex.name}" must have a numeric weight\`);
           if (typeof set.reps !== 'number') throw new Error(\`Set \${si} of exercise "\${ex.name}" must have numeric reps\`);
         });
@@ -86,6 +108,13 @@ export const executeScript = async (
 
         // Handle various return formats
         if (typeof resolvedResult === 'object' && resolvedResult !== null) {
+          const allowedRootKeys = ['workout', 'nextWorkout', 'message', 'lastExecutionMessage'];
+          Object.keys(resolvedResult).forEach(key => {
+            if (!allowedRootKeys.includes(key)) {
+              throw new Error(\`Result object has unknown field: "\${key}"\`);
+            }
+          });
+
           const workoutCandidate = resolvedResult.workout || resolvedResult.nextWorkout;
           const messageCandidate = resolvedResult.message || resolvedResult.lastExecutionMessage;
 
