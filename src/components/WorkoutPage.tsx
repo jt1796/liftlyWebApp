@@ -294,6 +294,16 @@ const WorkoutPage: React.FC = () => {
     }
   };
 
+  const unknownExercises = useMemo(() => {
+    if (!workout) return [];
+    const uniqueUnknowns = new Set(
+      workout.exercises
+        .map((ex) => ex.name)
+        .filter((name) => name && !combinedExercises.includes(name))
+    );
+    return Array.from(uniqueUnknowns);
+  }, [workout, combinedExercises]);
+
   const handleCloseSnackbar = (_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
@@ -577,6 +587,21 @@ const WorkoutPage: React.FC = () => {
           {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save Workout'}
         </Button>
       </Box>
+
+      {unknownExercises.length > 0 && (
+        <Alert severity="warning" sx={{ mt: 4 }}>
+          <Typography variant="body2" fontWeight="bold">
+            Unknown exercises detected:
+          </Typography>
+          <Typography variant="body2">
+            {unknownExercises.join(', ')}
+          </Typography>
+          <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+            These exercises are not in your exercise list. You might want to rename them to match an existing exercise or add them as custom exercises to ensure progress is tracked correctly.
+          </Typography>
+        </Alert>
+      )}
+
       <Snackbar open={showSnackbar} autoHideDuration={3000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}
