@@ -33,11 +33,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth-context-utils';
 import { useApp } from '../contexts/app-context-utils';
 import type { Script, Workout } from '../types';
+import { exercises as builtInExercises } from '../data/exercises';
 import {
   getScripts,
   saveScripts,
   getWorkoutsForUser,
   executeScript,
+  getCustomExercises,
   type ScriptExecutionResult
 } from '../utils';
 
@@ -96,6 +98,7 @@ const ScriptsPage = () => {
   const [isDebugDialogOpen, setIsDebugDialogOpen] = useState(false);
   const [debugResults, setDebugResults] = useState<ScriptExecutionResult[]>([]);
   const [debugProgress, setDebugProgress] = useState<{ current: number; total: number } | null>(null);
+  const [unknownExercises, setUnknownExercises] = useState<string[]>([]);
 
   const { data: scripts = [], isLoading: isLoadingScripts } = useQuery({
     queryKey: ['scripts', currentUser?.uid],
@@ -113,6 +116,12 @@ const ScriptsPage = () => {
         setShowSnackbar(true);
       },
     },
+  });
+
+  const { data: customExercises = [] } = useQuery({
+    queryKey: ['customExercises', currentUser?.uid],
+    queryFn: () => getCustomExercises(currentUser!.uid),
+    enabled: !!currentUser,
   });
 
   const mutation = useMutation({
@@ -187,13 +196,28 @@ const ScriptsPage = () => {
         const results: ScriptExecutionResult[] = [];
         let currentMessage = script.lastExecutionMessage;
         const currentHistory = [...history];
+        const allKnownExercises = new Set([
+          ...builtInExercises,
+          ...customExercises.map(ce => ce.name)
+        ]);
+        const foundUnknown = new Set<string>();
 
         setIsDebugDialogOpen(true); // Open early to show progress
         setDebugProgress({ current: 0, total });
+        setUnknownExercises([]); // Reset
 
         for (let i = 0; i < total; i++) {
           setDebugProgress({ current: i + 1, total });
           const result = await executeScript({ ...script, lastExecutionMessage: currentMessage }, currentHistory);
+
+          // Check for unknown exercises
+          result.workout.exercises.forEach(ex => {
+            if (!allKnownExercises.has(ex.name)) {
+              foundUnknown.add(ex.name);
+            }
+          });
+          setUnknownExercises(Array.from(foundUnknown));
+
           results.push(result);
           setDebugResults([...results]); // Update UI progressively
           currentMessage = result.message || '';
@@ -411,73 +435,86 @@ const ScriptsPage = () => {
         </DialogTitle>
         <DialogContent>
           {debugResults.length > 0 ? (
-            <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold', width: 50 }}>#</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: 100 }}>Date</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: 150 }}>Message</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Workout Summary</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', width: 300 }}>Logs</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {debugResults.map((result, i) => (
-                    <TableRow key={i} sx={{ '&:last-child td, &:last-child th': { border: 0 }, verticalAlign: 'top' }}>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell>
-                        <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>
-                          {new Date(result.workout.date).toLocaleDateString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                          {result.message}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.5}>
-                          {result.workout.exercises.map((ex, ei) => (
-                            <Box key={ei}>
-                              <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                                {ex.name}:
-                              </Typography>{' '}
-                              <Typography variant="caption">
-                                {ex.sets.map((s) => `${s.weight}x${s.reps}`).join(', ')}
-                              </Typography>
-                            </Box>
-                          ))}
-                        </Stack>
-                        {typeof result.rawResult === 'string' && result.rawResult.startsWith('Execution failed') && (
-                          <Typography color="error" variant="caption">
-                            {result.rawResult}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{
-                          bgcolor: 'grey.900',
-                          color: 'grey.100',
-                          p: 1,
-                          borderRadius: 1,
-                          fontFamily: 'monospace',
-                          fontSize: '0.75rem',
-                          maxHeight: '150px',
-                          overflow: 'auto'
-                        }}>
-                          {result.logs && result.logs.length > 0 ? (
-                            result.logs.map((log: string, li: number) => <div key={li} style={{ whiteSpace: 'pre-wrap' }}>{log}</div>)
-                          ) : (
-                            <Typography variant="caption" sx={{ fontStyle: 'italic', opacity: 0.5 }}>No logs</Typography>
-                          )}
-                        </Box>
-                      </TableCell>
+            <>
+              <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold', width: 50 }}>#</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', width: 100 }}>Date</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', width: 150 }}>Message</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Workout Summary</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', width: 300 }}>Logs</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {debugResults.map((result, i) => (
+                      <TableRow key={i} sx={{ '&:last-child td, &:last-child th': { border: 0 }, verticalAlign: 'top' }}>
+                        <TableCell>{i + 1}</TableCell>
+                        <TableCell>
+                          <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>
+                            {new Date(result.workout.date).toLocaleDateString()}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                            {result.message}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Stack spacing={0.5}>
+                            {result.workout.exercises.map((ex, ei) => (
+                              <Box key={ei}>
+                                <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                                  {ex.name}:
+                                </Typography>{' '}
+                                <Typography variant="caption">
+                                  {ex.sets.map((s) => `${s.weight}x${s.reps}`).join(', ')}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Stack>
+                          {typeof result.rawResult === 'string' && result.rawResult.startsWith('Execution failed') && (
+                            <Typography color="error" variant="caption">
+                              {result.rawResult}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{
+                            bgcolor: 'grey.900',
+                            color: 'grey.100',
+                            p: 1,
+                            borderRadius: 1,
+                            fontFamily: 'monospace',
+                            fontSize: '0.75rem',
+                            maxHeight: '150px',
+                            overflow: 'auto'
+                          }}>
+                            {result.logs && result.logs.length > 0 ? (
+                              result.logs.map((log: string, li: number) => <div key={li} style={{ whiteSpace: 'pre-wrap' }}>{log}</div>)
+                            ) : (
+                              <Typography variant="caption" sx={{ fontStyle: 'italic', opacity: 0.5 }}>No logs</Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {unknownExercises.length > 0 && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                    Unknown Exercises Detected:
+                  </Typography>
+                  <Typography variant="body2">
+                    {unknownExercises.join(', ')}
+                  </Typography>
+                </Alert>
+              )}
+            </>
           ) : (
             !debugProgress && <Typography variant="body2">No results to display.</Typography>
           )}
