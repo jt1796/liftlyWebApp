@@ -74,7 +74,7 @@ workout type structure. don't add any extra fields:
 lastExecutionMessage type structure:
 "Week 1 Day 1"
 
-The function must have this type: (workoutHistory: workout[], lastExecutionMessage: string?) => { nextWorkout: workout, lastExecutionMessage: string }
+The function must have this type and accept exactly these two parameters: (workoutHistory: workout[], lastExecutionMessage: string?) => { nextWorkout: workout, lastExecutionMessage: string }
 
 Example script based on the Starting Strength program:
 

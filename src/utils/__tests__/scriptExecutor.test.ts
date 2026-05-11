@@ -143,11 +143,29 @@ describe('scriptExecutor worker logic details', () => {
     const script = {
       id: '1',
       name: 'Fn Script',
-      code: 'return (history) => ({ nextWorkout: { exercises: [] }, lastExecutionMessage: "fn success" });',
+      code: 'return (history, lastExecutionMessage) => ({ nextWorkout: { exercises: [] }, lastExecutionMessage: "fn success" });',
       lastExecutionMessage: ''
     };
     const result = await executeScript(script, mockHistory);
     expect(result.message).toBe('fn success');
+  });
+
+  it('should throw if the returned function has incorrect number of arguments', async () => {
+    const scriptTooFew = {
+      id: '1',
+      name: 'Too Few Args',
+      code: 'return (history) => ({ nextWorkout: { exercises: [] }, lastExecutionMessage: "bad" });',
+      lastExecutionMessage: ''
+    };
+    await expect(executeScript(scriptTooFew, mockHistory)).rejects.toThrow('The returned function must have exactly 2 arguments (history, lastExecutionMessage), but it has 1.');
+
+    const scriptTooMany = {
+      id: '2',
+      name: 'Too Many Args',
+      code: 'return (history, msg, extra) => ({ nextWorkout: { exercises: [] }, lastExecutionMessage: "bad" });',
+      lastExecutionMessage: ''
+    };
+    await expect(executeScript(scriptTooMany, mockHistory)).rejects.toThrow('The returned function must have exactly 2 arguments (history, lastExecutionMessage), but it has 3.');
   });
 
   it('should handle async scripts', async () => {

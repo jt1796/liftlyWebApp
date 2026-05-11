@@ -83,6 +83,9 @@ export const executeScript = async (
         
         // If the script returns a function, call it
         if (typeof result === 'function') {
+          if (result.length !== 2) {
+            throw new Error(\`The returned function must have exactly 2 arguments (history, lastExecutionMessage), but it has \${result.length}.\`);
+          }
           console.log('Detected returned function, executing it...');
           const functionResult = result(history, lastExecutionMessage);
           if (functionResult === undefined) {
