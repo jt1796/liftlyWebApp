@@ -57,11 +57,10 @@ const ensureIds = (scripts: Script[]): Script[] => {
 const emptyScript: Script = {
   lastExecutionMessage: '',
   name: '',
-  code: `Paste this into gemini or chatgpt except for this line. 
-
-create a javascript function that returns the next <name of the workout program> workout based on:
-- the workout history of the user, and 
-- lastExecutionMessage from the last time this script was executed
+  code: `/** Try pasting this into gemini except for this line. Fill in <name of the workout program>
+create javascript code that returns a function that generates the next <name of the workout program> workout based on:
+- first parameter: the workout history of the user, and 
+- second parameter: lastExecutionMessage, output from the last time this script was executed. Can be used to keep track of which day the program is on
 
 workout type structure:
 {
@@ -75,9 +74,80 @@ workout type structure:
 lastExecutionMessage type structure:
 "Week 1 Day 1"
 
-Create a javascript statement that returns a function of type: (workoutHistory: workout[], lastExecutionMessage: string?) => { nextWorkout: workout, lastExecutionMessage: string }
+The function must have this type: (workoutHistory: workout[], lastExecutionMessage: string?) => { nextWorkout: workout, lastExecutionMessage: string }
 
-Example output: return (workoutHistory, lastExecutionMessage) => { ... }
+Example script based on the Starting Strength program:
+
+const INITIAL_WEIGHTS = {
+  "Squat": 45,
+  "Overhead Press OHP": 45,
+  "Bench Press": 45,
+  "Deadlift": 95,
+  "Power clean": 65
+};
+
+const increments = {
+  "Squat": 5,
+  "Overhead Press OHP": 5,
+  "Bench Press": 5,
+  "Deadlift": 10,
+  "Power clean": 5
+};
+
+/**
+ * Generates the next Starting Strength workout.
+ * @param {Array} workoutHistory - Array of previous workout objects
+ * @param {string|null} lastExecutionMessage - e.g., "Workout A"
+ * @returns {Object} { nextWorkout: workout, lastExecutionMessage: string }
+ */
+const getNextStartingStrengthWorkout = (workoutHistory, lastExecutionMessage) => {
+  let nextType = "A";
+  if (lastExecutionMessage) {
+    const lastType = lastExecutionMessage.includes("Workout A") ? "A" : "B";
+    nextType = lastType === "A" ? "B" : "A";
+  }
+
+  const getLastWeight = (exerciseName) => {
+    for (let i = workoutHistory.length - 1; i >= 0; i--) {
+      const exercise = workoutHistory[i].exercises.find(e => e.name === exerciseName);
+      if (exercise && exercise.sets.length > 0) {
+        return exercise.sets[0].weight;
+      }
+    }
+    return null; 
+  };
+
+  const exerciseNames = (nextType === "A") 
+    ? ["Squat", "Overhead Press OHP", "Deadlift"] 
+    : ["Squat", "Bench Press", "Power clean"];
+
+  const nextExercises = exerciseNames.map(name => {
+    const lastWeight = getLastWeight(name);
+    
+    const weight = lastWeight !== null 
+      ? lastWeight + (increments[name] || 5) 
+      : (INITIAL_WEIGHTS[name] || 45);
+    
+    const numSets = (name === "Deadlift") ? 1 : (name === "Power clean" ? 5 : 3);
+    const repsPerSet = (name === "Power clean") ? 3 : 5;
+
+    return {
+      name,
+      sets: Array(numSets).fill({ weight, reps: repsPerSet })
+    };
+  });
+
+  return {
+    nextWorkout: {
+      date: new Date().toISOString().split('T')[0], // Returns YYYY-MM-DD
+      type: nextType,
+      exercises: nextExercises
+    },
+    lastExecutionMessage: \`Workout \${nextType}\`
+  };
+};
+
+return getNextStartingStrengthWorkout;
 `
 
 };
