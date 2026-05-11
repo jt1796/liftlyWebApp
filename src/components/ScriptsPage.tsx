@@ -94,12 +94,12 @@ const increments = {
   "Power clean": 5
 };
 
-/**
- * Generates the next Starting Strength workout.
- * @param {Array} workoutHistory - Array of previous workout objects
- * @param {string|null} lastExecutionMessage - e.g., "Workout A"
- * @returns {Object} { nextWorkout: workout, lastExecutionMessage: string }
- */
+//
+// Generates the next Starting Strength workout.
+// @param {Array} workoutHistory - Array of previous workout objects
+// @param {string|null} lastExecutionMessage - e.g., "Workout A"
+//  @returns {Object} { nextWorkout: workout, lastExecutionMessage: string }
+//
 const getNextStartingStrengthWorkout = (workoutHistory, lastExecutionMessage) => {
   let nextType = "A";
   if (lastExecutionMessage) {
