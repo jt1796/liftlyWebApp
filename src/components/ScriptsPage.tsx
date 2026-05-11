@@ -447,6 +447,17 @@ const ScriptsPage = () => {
             }
             sx={{ mb: 2 }}
           />
+          <TextField
+            margin="dense"
+            label="Last Execution Message"
+            fullWidth
+            variant="outlined"
+            value={selectedScript.lastExecutionMessage || ''}
+            onChange={(e) =>
+              setSelectedScript({ ...selectedScript, lastExecutionMessage: e.target.value })
+            }
+            sx={{ mb: 2 }}
+          />
           <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
             JavaScript Code
           </Typography>
