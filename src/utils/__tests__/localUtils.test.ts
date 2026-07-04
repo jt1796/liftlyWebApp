@@ -7,6 +7,7 @@ import {
   findSetToPR,
   createFilterOptions,
   workoutToText,
+  getPRDetailsForWorkout,
 } from '../localUtils';
 import type { Workout } from '../../types';
 
@@ -401,6 +402,96 @@ describe('localUtils', () => {
       const result = workoutToText(workoutWithPR, 'phpbb', mockWorkouts);
       expect(result).toContain('[b]PR![/b] New Max Weight: 110 (was 105)');
       expect(result).toContain('[b]PR![/b] New E1RM: 121 (was 117)');
+    });
+  });
+
+  describe('getPRDetailsForWorkout', () => {
+    it('should calculate set and workout PRs correctly based only on past history', () => {
+      const historyWorkouts: Workout[] = [
+        {
+          id: 'w1',
+          date: new Date('2023-01-01T10:00:00Z'),
+          exercises: [
+            {
+              name: 'Bench Press',
+              sets: [
+                { id: 's1', weight: 100, reps: 5 }, // Max Weight: 100, E1RM: 117
+              ],
+            },
+          ],
+        },
+      ];
+
+      const currentWorkout: Workout = {
+        id: 'w2',
+        date: new Date('2023-01-02T10:00:00Z'),
+        exercises: [
+          {
+            name: 'Bench Press',
+            sets: [
+              { id: 's2', weight: 105, reps: 5 }, // E1RM: 123. Both Max Weight (105 > 100) and E1RM (123 > 117) are PRs
+              { id: 's3', weight: 95, reps: 5 },  // E1RM: 111. Neither is a PR
+            ],
+          },
+        ],
+      };
+
+      const result = getPRDetailsForWorkout(currentWorkout, [...historyWorkouts, currentWorkout]);
+      expect(result.workoutPRCount).toBe(2); // Max Weight and E1RM
+      expect(result.workoutPRList).toHaveLength(2);
+      expect(result.setPRDetails['s2']).toEqual({
+        isPR: true,
+        isMaxWeightPR: true,
+        isE1RMPR: true,
+        prevMaxWeight: 100,
+        prevMax1RM: 117,
+      });
+      expect(result.setPRDetails['s3']).toEqual({
+        isPR: false,
+        isMaxWeightPR: false,
+        isE1RMPR: false,
+        prevMaxWeight: 100,
+        prevMax1RM: 117,
+      });
+    });
+
+    it('should ignore workouts that occur at or after the current workout date', () => {
+      const currentWorkout: Workout = {
+        id: 'w1',
+        date: new Date('2023-01-01T10:00:00Z'),
+        exercises: [
+          {
+            name: 'Squat',
+            sets: [
+              { id: 's1', weight: 150, reps: 5 },
+            ],
+          },
+        ],
+      };
+
+      const futureWorkout: Workout = {
+        id: 'w2',
+        date: new Date('2023-01-02T10:00:00Z'),
+        exercises: [
+          {
+            name: 'Squat',
+            sets: [
+              { id: 's2', weight: 200, reps: 5 },
+            ],
+          },
+        ],
+      };
+
+      // Since currentWorkout is the earliest, it has no prior history.
+      const result = getPRDetailsForWorkout(currentWorkout, [currentWorkout, futureWorkout]);
+      expect(result.workoutPRCount).toBe(0);
+      expect(result.setPRDetails['s1']).toEqual({
+        isPR: false,
+        isMaxWeightPR: false,
+        isE1RMPR: false,
+        prevMaxWeight: null,
+        prevMax1RM: null,
+      });
     });
   });
 });

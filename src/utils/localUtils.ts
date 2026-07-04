@@ -275,7 +275,18 @@ export const getExerciseHistory = (
 };
 
 export const workoutToText = (workout: Workout, format: 'txt' | 'phpbb', allWorkouts?: Workout[]) => {
-  const prs = allWorkouts ? calculateAllPRs(allWorkouts).filter(pr => pr.date.getTime() === workout.date.getTime()) : [];
+  const workoutsList = allWorkouts ? [...allWorkouts] : [];
+  if (allWorkouts) {
+    const index = workoutsList.findIndex((w) => w.id && workout.id && w.id === workout.id);
+    if (index !== -1) {
+      workoutsList[index] = workout;
+    } else {
+      workoutsList.push(workout);
+    }
+  }
+  const workoutDate = new Date(workout.date);
+  const workoutDateTime = isNaN(workoutDate.getTime()) ? new Date().getTime() : workoutDate.getTime();
+  const prs = allWorkouts ? calculateAllPRs(workoutsList).filter(pr => new Date(pr.date).getTime() === workoutDateTime) : [];
 
   const workoutText = workout.exercises
     .map((exercise) => {
@@ -360,4 +371,116 @@ export const generateFacts = (workouts: Workout[]): string[] => {
   facts.sort(() => Math.random() - 0.5);
 
   return facts;
+};
+
+export interface SetPRDetails {
+  isPR: boolean;
+  isMaxWeightPR: boolean;
+  isE1RMPR: boolean;
+  prevMaxWeight: number | null;
+  prevMax1RM: number | null;
 }
+
+export const getPRDetailsForWorkout = (
+  currentWorkout: Workout,
+  allWorkouts: Workout[]
+) => {
+  const currentWorkoutDate = currentWorkout.date ? new Date(currentWorkout.date) : new Date();
+  const currentWorkoutDateTime = isNaN(currentWorkoutDate.getTime()) ? new Date().getTime() : currentWorkoutDate.getTime();
+
+  const history = allWorkouts.filter(
+    (w) =>
+      w.id !== currentWorkout.id &&
+      w.date &&
+      new Date(w.date).getTime() < currentWorkoutDateTime
+  );
+
+  const pastMaxes: Record<string, { maxWeight: number; max1RM: number }> = {};
+  for (const pw of history) {
+    for (const ex of pw.exercises) {
+      if (!pastMaxes[ex.name]) {
+        pastMaxes[ex.name] = { maxWeight: 0, max1RM: 0 };
+      }
+      const m = pastMaxes[ex.name];
+      for (const set of ex.sets) {
+        if (set.weight > m.maxWeight) {
+          m.maxWeight = set.weight;
+        }
+        const e1rm = calculateOneRepMax(set.weight, set.reps);
+        if (e1rm > m.max1RM) {
+          m.max1RM = e1rm;
+        }
+      }
+    }
+  }
+
+  const setPRDetails: Record<string, SetPRDetails> = {};
+  const exerciseBests: Record<string, { maxWeight: number; max1RM: number }> = {};
+
+  for (const ex of currentWorkout.exercises) {
+    for (const set of ex.sets) {
+      const weight = isNaN(set.weight) ? 0 : set.weight;
+      const reps = isNaN(set.reps) ? 0 : set.reps;
+      const e1rm = calculateOneRepMax(weight, reps);
+      const m = pastMaxes[ex.name] || { maxWeight: 0, max1RM: 0 };
+
+      const isMaxWeightPR = m.maxWeight > 0 && weight > m.maxWeight;
+      const isE1RMPR = m.max1RM > 0 && e1rm > m.max1RM;
+      const isPR = isMaxWeightPR || isE1RMPR;
+
+      if (set.id) {
+        setPRDetails[set.id] = {
+          isPR,
+          isMaxWeightPR,
+          isE1RMPR,
+          prevMaxWeight: m.maxWeight > 0 ? m.maxWeight : null,
+          prevMax1RM: m.max1RM > 0 ? m.max1RM : null,
+        };
+      }
+    }
+
+    let currentBestWeight = 0;
+    let currentBest1RM = 0;
+    for (const set of ex.sets) {
+      const weight = isNaN(set.weight) ? 0 : set.weight;
+      const reps = isNaN(set.reps) ? 0 : set.reps;
+      if (weight > currentBestWeight) {
+        currentBestWeight = weight;
+      }
+      const e1rm = calculateOneRepMax(weight, reps);
+      if (e1rm > currentBest1RM) {
+        currentBest1RM = e1rm;
+      }
+    }
+    exerciseBests[ex.name] = { maxWeight: currentBestWeight, max1RM: currentBest1RM };
+  }
+
+  const workoutPRList: { exerciseName: string; type: 'E1RM' | 'Max Weight'; value: number; oldValue: number | null }[] = [];
+  for (const exName in exerciseBests) {
+    const bests = exerciseBests[exName];
+    const m = pastMaxes[exName] || { maxWeight: 0, max1RM: 0 };
+
+    if (m.maxWeight > 0 && bests.maxWeight > m.maxWeight) {
+      workoutPRList.push({
+        exerciseName: exName,
+        type: 'Max Weight',
+        value: bests.maxWeight,
+        oldValue: m.maxWeight,
+      });
+    }
+    if (m.max1RM > 0 && bests.max1RM > m.max1RM) {
+      workoutPRList.push({
+        exerciseName: exName,
+        type: 'E1RM',
+        value: bests.max1RM,
+        oldValue: m.max1RM,
+      });
+    }
+  }
+
+  return {
+    setPRDetails,
+    workoutPRList,
+    workoutPRCount: workoutPRList.length,
+  };
+};

@@ -19,12 +19,14 @@ import {
   Alert,
   Snackbar,
   ButtonGroup,
+  Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import HistoryIcon from '@mui/icons-material/History';
 import AddIcon from '@mui/icons-material/Add';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import {
@@ -37,6 +39,8 @@ import {
   createFilterOptions,
   workoutToText,
   getExerciseHistory,
+  getPRDetailsForWorkout,
+  type SetPRDetails,
 } from '../utils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -200,6 +204,17 @@ const WorkoutPage: React.FC = () => {
     queryFn: () => getWorkoutsForUser(currentUser!.uid),
     enabled: !!currentUser,
   });
+
+  const prDetails = useMemo(() => {
+    if (!workout || !allWorkouts) {
+      return {
+        setPRDetails: {} as Record<string, SetPRDetails>,
+        workoutPRList: [] as { exerciseName: string; type: 'E1RM' | 'Max Weight'; value: number; oldValue: number | null }[],
+        workoutPRCount: 0,
+      };
+    }
+    return getPRDetailsForWorkout(workout, allWorkouts);
+  }, [workout, allWorkouts]);
 
   const handleShowHistory = (exerciseName: string) => {
     if (allWorkouts) {
@@ -428,8 +443,31 @@ const WorkoutPage: React.FC = () => {
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {id ? 'Edit Workout' : 'Create Workout'}
+          {prDetails.workoutPRCount > 0 && (
+            <Tooltip
+              title={
+                <Box sx={{ p: 0.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.75rem' }}>
+                    Personal Records Broken:
+                  </Typography>
+                  {prDetails.workoutPRList.map((pr, index) => (
+                    <Typography key={index} variant="caption" display="block">
+                      • {pr.exerciseName} ({pr.type === 'E1RM' ? 'E1RM' : 'Max Weight'}): {pr.oldValue} → {pr.value} lbs
+                    </Typography>
+                  ))}
+                </Box>
+              }
+              arrow
+            >
+              <Box sx={{ display: 'inline-flex', gap: 0.25 }}>
+                {Array.from({ length: prDetails.workoutPRCount }).map((_, i) => (
+                  <WorkspacePremiumIcon key={i} sx={{ color: '#FFD700', fontSize: '2rem' }} />
+                ))}
+              </Box>
+            </Tooltip>
+          )}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ButtonGroup variant="outlined" aria-label="outlined button group" size="small">
@@ -521,13 +559,39 @@ const WorkoutPage: React.FC = () => {
                                           error={set.reps === 0}
                                           onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
                                         />
-                                        <Box sx={{ minWidth: '60px', textAlign: 'center' }}>
-                                          <Typography variant="body2">
-                                            {calculateOneRepMax(set.weight, set.reps)}
-                                          </Typography>
-                                          <Typography variant="caption" sx={{ lineHeight: 1, fontSize: 6 }}>
-                                            E1RM
-                                          </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                          <Box sx={{ minWidth: '60px', textAlign: 'center' }}>
+                                            <Typography variant="body2">
+                                              {calculateOneRepMax(set.weight, set.reps)}
+                                            </Typography>
+                                            <Typography variant="caption" sx={{ lineHeight: 1, fontSize: 6 }}>
+                                              E1RM
+                                            </Typography>
+                                          </Box>
+                                          {set.id && prDetails.setPRDetails[set.id]?.isPR && (
+                                            <Tooltip
+                                              title={
+                                                <Box sx={{ p: 0.5 }}>
+                                                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.75rem' }}>
+                                                    Personal Record Set!
+                                                  </Typography>
+                                                  {prDetails.setPRDetails[set.id].isMaxWeightPR && (
+                                                    <Typography variant="caption" display="block">
+                                                      • Max Weight: {prDetails.setPRDetails[set.id].prevMaxWeight} → {set.weight} lbs
+                                                    </Typography>
+                                                  )}
+                                                  {prDetails.setPRDetails[set.id].isE1RMPR && (
+                                                    <Typography variant="caption" display="block">
+                                                      • E1RM: {prDetails.setPRDetails[set.id].prevMax1RM} → {calculateOneRepMax(set.weight, set.reps)} lbs
+                                                    </Typography>
+                                                  )}
+                                                </Box>
+                                              }
+                                              arrow
+                                            >
+                                              <WorkspacePremiumIcon sx={{ color: '#FFD700', fontSize: '1.25rem' }} />
+                                            </Tooltip>
+                                          )}
                                         </Box>
                                       </Box>
                                       <IconButton onClick={() => removeSet(exerciseIndex, setIndex)} color="error" size="small">

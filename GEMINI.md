@@ -30,7 +30,7 @@ The project follows a standard React application structure:
     *   `utils/`: Contains utility functions.
         *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data, workout templates, and user scripts.
         *   `scriptExecutor.ts`: Executes user-provided JavaScript snippets in a Web Worker sandbox to generate new workouts based on history.
-        *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs), analyzing exercise metrics, generating E1RM suggestions, converting workout data to text and getting exercise history.
+        *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs) including real-time details (`getPRDetailsForWorkout`), analyzing exercise metrics, generating E1RM suggestions, converting workout data to text and getting exercise history.
     *   `components/`: Contains reusable React components.
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
         *   `LoginPage.tsx`: Handles user authentication.
