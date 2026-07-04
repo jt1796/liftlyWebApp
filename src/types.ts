@@ -32,3 +32,20 @@ export interface Script {
   code: string;
   lastExecutionMessage: string;
 }
+
+export interface UserProfile {
+  uid: string;
+  displayName: string | null;
+  photoURL: string | null;
+}
+
+export type FriendshipStatus = 'pending' | 'accepted';
+
+export interface Friendship {
+  id: string;              // composite doc ID: smallerUid_largerUid
+  requesterId: string;
+  receiverId: string;
+  status: FriendshipStatus;
+  createdAt: Date;
+  updatedAt: Date;
+}

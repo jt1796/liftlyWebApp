@@ -2,6 +2,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isAllowedUser() {
       let allowedUserIds = [
         "xQ0sExBTkmZSCQD2Zs0hDORRUt12",
@@ -12,21 +13,94 @@ service cloud.firestore {
       return request.auth.uid in allowedUserIds;
     }
 
+    /**
+     * Returns true if the caller has an accepted friendship with targetUid.
+     * The friendship doc ID is always smallerUid_largerUid (deterministic).
+     */
+    function isAcceptedFriend(targetUid) {
+      let smallerId = request.auth.uid < targetUid
+        ? request.auth.uid : targetUid;
+      let largerId = request.auth.uid < targetUid
+        ? targetUid : request.auth.uid;
+      let friendshipId = smallerId + '_' + largerId;
+      return exists(/databases/$(database)/documents/friendships/$(friendshipId))
+        && get(/databases/$(database)/documents/friendships/$(friendshipId)).data.status == 'accepted';
+    }
+
+    // ─── Workouts ────────────────────────────────────────────────────────────
     match /workouts/{workoutId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId && isAllowedUser();
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId && isAllowedUser();
+      // Owner can read, update, delete
+      allow read, update, delete: if request.auth != null
+        && request.auth.uid == resource.data.userId
+        && isAllowedUser();
+
+      // Owner can create
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId
+        && isAllowedUser();
+
+      // Accepted friends can read (not write)
+      allow read: if request.auth != null
+        && isAllowedUser()
+        && isAcceptedFriend(resource.data.userId);
     }
 
+    // ─── Custom Exercises ─────────────────────────────────────────────────────
     match /customExercises/{userId} {
-      allow read, create, update: if request.auth != null && request.auth.uid == userId && isAllowedUser();
+      allow read, create, update: if request.auth != null
+        && request.auth.uid == userId
+        && isAllowedUser();
     }
 
+    // ─── Templates ────────────────────────────────────────────────────────────
     match /templates/{userId} {
-      allow read, create, update: if request.auth != null && request.auth.uid == userId && isAllowedUser();
+      allow read, create, update: if request.auth != null
+        && request.auth.uid == userId
+        && isAllowedUser();
     }
 
+    // ─── Scripts ──────────────────────────────────────────────────────────────
     match /scripts/{userId} {
-      allow read, create, update: if request.auth != null && request.auth.uid == userId && isAllowedUser();
+      allow read, create, update: if request.auth != null
+        && request.auth.uid == userId
+        && isAllowedUser();
+    }
+
+    // ─── User Profiles ────────────────────────────────────────────────────────
+    match /userProfiles/{userId} {
+      // Any authenticated user can read profiles (needed for friend-code lookup)
+      allow read: if request.auth != null && isAllowedUser();
+      // Only the owner can write their own profile
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && isAllowedUser();
+    }
+
+    // ─── Friendships ──────────────────────────────────────────────────────────
+    match /friendships/{friendshipId} {
+      // Both parties can read the friendship doc
+      allow read: if request.auth != null
+        && isAllowedUser()
+        && (resource.data.requesterId == request.auth.uid
+          || resource.data.receiverId == request.auth.uid);
+
+      // Only the requester can create; must set status 'pending'
+      allow create: if request.auth != null
+        && isAllowedUser()
+        && request.resource.data.requesterId == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      // Only the receiver can accept (status → 'accepted')
+      allow update: if request.auth != null
+        && isAllowedUser()
+        && resource.data.receiverId == request.auth.uid
+        && request.resource.data.status == 'accepted';
+
+      // Either party can delete (cancel / decline / unfriend)
+      allow delete: if request.auth != null
+        && isAllowedUser()
+        && (resource.data.requesterId == request.auth.uid
+          || resource.data.receiverId == request.auth.uid);
     }
   }
 }

@@ -28,7 +28,7 @@ The project follows a standard React application structure:
     *   `src/`: Contains the main application source code.
     *   `types.ts`: Defines TypeScript interfaces for data structures like `Set`, `Exercise`, `Workout`, `CustomExercise`, `Template`, and `Script`.
     *   `utils/`: Contains utility functions.
-        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data, workout templates, and user scripts.
+        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data, workout templates, user scripts, user profiles, and friendships.
         *   `scriptExecutor.ts`: Executes user-provided JavaScript snippets in a Web Worker sandbox to generate new workouts based on history.
         *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs) including real-time details (`getPRDetailsForWorkout`), analyzing exercise metrics, generating E1RM suggestions, converting workout data to text, getting exercise history, calculating total workout weight (`calculateTotalWorkoutWeight`), and matching weight to progressive ascii/emoji objects (`getWorkoutWeightObject`).
     *   `components/`: Contains reusable React components.
@@ -41,6 +41,9 @@ The project follows a standard React application structure:
         *   `ScriptsPage.tsx`: A component for creating and managing user-defined JavaScript snippets. Supports script execution to generate new workouts. Features an enhanced debug mode that generates 25 sequential workouts, passing state between them, and displays the results in a summary table.
         *   `ProtectedLayout.tsx`: A component that guards routes that require authentication.
         *   `ExerciseHistoryDialog.tsx`: A component for showing the history of a given exercise.
+        *   `FriendsPage.tsx`: Manage friends — displays the user's shareable invite code (based on UID), a friend-code lookup/add flow, and a tabbed list of accepted friends and pending requests. Friends can navigate to each other's workouts and records.
+        *   `FriendWorkoutsPage.tsx`: Read-only view of a friend's workout history. Accessed at `/friends/:friendUid/workouts`.
+        *   `FriendRecordsPage.tsx`: Read-only view of a friend's exercise metrics and PRs. Accessed at `/friends/:friendUid/records`.
     *   `contexts/`: Contains React contexts for managing application-wide state.
         *   `AuthContext.tsx`: Provides an `AuthProvider` component to manage user authentication state using Firebase. It makes the current user, loading status, and logout function available to its children.
         *   `auth-context-utils.ts`: Defines the `AuthContext` and a `useAuth` hook for components to easily access authentication state.

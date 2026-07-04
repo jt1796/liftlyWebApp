@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useApp } from './contexts/app-context-utils'; // Import useApp
+import { useApp } from './contexts/app-context-utils';
 import LoginPage from './components/LoginPage';
 import ProtectedLayout from './components/ProtectedLayout';
 import NotFoundPage from './components/NotFoundPage';
@@ -11,6 +11,9 @@ import TemplatesPage from './components/TemplatesPage';
 import ScriptsPage from './components/ScriptsPage';
 import ErrorPage from './components/ErrorPage';
 import Dashboard from './components/Dashboard';
+import FriendsPage from './components/FriendsPage';
+import FriendWorkoutsPage from './components/FriendWorkoutsPage';
+import FriendRecordsPage from './components/FriendRecordsPage';
 import {
   createTheme,
   ThemeProvider,
@@ -42,6 +45,9 @@ function App() {
             <Route path="/exercises" element={<ExercisesPage />} />
             <Route path="/templates" element={<TemplatesPage />} />
             <Route path="/scripts" element={<ScriptsPage />} />
+            <Route path="/friends" element={<FriendsPage />} />
+            <Route path="/friends/:friendUid/workouts" element={<FriendWorkoutsPage />} />
+            <Route path="/friends/:friendUid/records" element={<FriendRecordsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
