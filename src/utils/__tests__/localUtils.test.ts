@@ -8,6 +8,8 @@ import {
   createFilterOptions,
   workoutToText,
   getPRDetailsForWorkout,
+  calculateTotalWorkoutWeight,
+  getWorkoutWeightObject,
 } from '../localUtils';
 import type { Workout } from '../../types';
 
@@ -492,6 +494,43 @@ describe('localUtils', () => {
         prevMaxWeight: null,
         prevMax1RM: null,
       });
+    });
+  });
+
+  describe('calculateTotalWorkoutWeight', () => {
+    it('should calculate total weight correctly', () => {
+      const workout: Workout = {
+        date: new Date(),
+        exercises: [
+          {
+            name: 'Bench Press',
+            sets: [
+              { weight: 100, reps: 5 },
+              { weight: 110, reps: 3 },
+            ],
+          },
+          {
+            name: 'Squat',
+            sets: [{ weight: 200, reps: 1 }],
+          },
+        ],
+      };
+      expect(calculateTotalWorkoutWeight(workout)).toBe(100 * 5 + 110 * 3 + 200 * 1);
+    });
+
+    it('should return 0 for empty exercises/sets', () => {
+      expect(calculateTotalWorkoutWeight({ date: new Date(), exercises: [] })).toBe(0);
+    });
+  });
+
+  describe('getWorkoutWeightObject', () => {
+    it('should map weight to correct progressive object', () => {
+      expect(getWorkoutWeightObject(0).emoji).toBe('📎');
+      expect(getWorkoutWeightObject(0.005).emoji).toBe('📎');
+      expect(getWorkoutWeightObject(0.01).emoji).toBe('🪶');
+      expect(getWorkoutWeightObject(50).emoji).toBe('🪵');
+      expect(getWorkoutWeightObject(1000).emoji).toBe('🐎');
+      expect(getWorkoutWeightObject(500000).emoji).toBe('🚂');
     });
   });
 });

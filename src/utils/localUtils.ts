@@ -484,3 +484,85 @@ export const getPRDetailsForWorkout = (
     workoutPRCount: workoutPRList.length,
   };
 };
+
+export const calculateTotalWorkoutWeight = (workout: Workout): number => {
+  let total = 0;
+  if (!workout || !workout.exercises) return 0;
+  for (const ex of workout.exercises) {
+    if (!ex.sets) continue;
+    for (const set of ex.sets) {
+      const weight = isNaN(set.weight) ? 0 : set.weight;
+      const reps = isNaN(set.reps) ? 0 : set.reps;
+      total += weight * reps;
+    }
+  }
+  return total;
+};
+
+export interface WeightObject {
+  emoji: string;
+  name: string;
+  weight: number;
+}
+
+export const WEIGHT_OBJECTS: WeightObject[] = [
+  { emoji: '📎', name: 'Paperclip', weight: 0.002 },
+  { emoji: '🪶', name: 'Feather', weight: 0.01 },
+  { emoji: '🪙', name: 'Coin', weight: 0.02 },
+  { emoji: '🔑', name: 'Key', weight: 0.05 },
+  { emoji: '🐹', name: 'Hamster', weight: 0.1 },
+  { emoji: '🧄', name: 'Garlic Bulb', weight: 0.15 },
+  { emoji: '🍎', name: 'Apple', weight: 0.3 },
+  { emoji: '📱', name: 'Smartphone', weight: 0.5 },
+  { emoji: '🥤', name: 'Soda Can', weight: 0.8 },
+  { emoji: '🥫', name: 'Soup Can', weight: 1 },
+  { emoji: '📖', name: 'Book', weight: 1.5 },
+  { emoji: '💻', name: 'Laptop', weight: 3 },
+  { emoji: '🧱', name: 'Brick', weight: 5 },
+  { emoji: '🐱', name: 'Cat', weight: 10 },
+  { emoji: '🎃', name: 'Pumpkin', weight: 12 },
+  { emoji: '🎳', name: 'Bowling Ball', weight: 14 },
+  { emoji: '🍉', name: 'Watermelon', weight: 20 },
+  { emoji: '🚲', name: 'Bicycle', weight: 30 },
+  { emoji: '🎛️', name: 'Microwave', weight: 40 },
+  { emoji: '🪵', name: 'Log', weight: 50 },
+  { emoji: '🧳', name: 'Suitcase', weight: 60 },
+  { emoji: '🐕', name: 'Dog', weight: 70 },
+  { emoji: '🚽', name: 'Toilet', weight: 90 },
+  { emoji: '🛢️', name: 'Beer Keg', weight: 120 },
+  { emoji: '🧼', name: 'Washing Machine', weight: 150 },
+  { emoji: '🐑', name: 'Sheep', weight: 180 },
+  { emoji: '🛋️', name: 'Sofa', weight: 200 },
+  { emoji: '🐼', name: 'Panda', weight: 250 },
+  { emoji: '🦍', name: 'Gorilla', weight: 350 },
+  { emoji: '🦁', name: 'Lion', weight: 400 },
+  { emoji: '🐻', name: 'Grizzly Bear', weight: 600 },
+  { emoji: '🎹', name: 'Grand Piano', weight: 800 },
+  { emoji: '🐎', name: 'Horse', weight: 1000 },
+  { emoji: '🦬', name: 'Bison', weight: 1200 },
+  { emoji: '🐮', name: 'Cow', weight: 1500 },
+  { emoji: '🦒', name: 'Giraffe', weight: 2000 },
+  { emoji: '🚗', name: 'Compact Car', weight: 2500 },
+  { emoji: '🚙', name: 'SUV', weight: 4500 },
+  { emoji: '🚜', name: 'Tractor', weight: 6000 },
+  { emoji: '🚚', name: 'Delivery Truck', weight: 10000 },
+  { emoji: '🐘', name: 'Elephant', weight: 12000 },
+  { emoji: '🦖', name: 'T-Rex', weight: 16000 },
+  { emoji: '⚓', name: 'Ship Anchor', weight: 20000 },
+  { emoji: '🚌', name: 'City Bus', weight: 30000 },
+  { emoji: '🚒', name: 'Fire Truck', weight: 40000 },
+  { emoji: '🛰️', name: 'Space Shuttle', weight: 165000 },
+  { emoji: '🏠', name: 'House', weight: 200000 },
+  { emoji: '🐋', name: 'Blue Whale', weight: 300000 },
+  { emoji: '🛩️', name: 'Boeing 747', weight: 400000 },
+  { emoji: '🚂', name: 'Locomotive', weight: 450000 },
+];
+
+export const getWorkoutWeightObject = (totalWeight: number): WeightObject => {
+  for (let i = WEIGHT_OBJECTS.length - 1; i >= 0; i--) {
+    if (totalWeight >= WEIGHT_OBJECTS[i].weight) {
+      return WEIGHT_OBJECTS[i];
+    }
+  }
+  return WEIGHT_OBJECTS[0];
+};

@@ -40,6 +40,8 @@ import {
   workoutToText,
   getExerciseHistory,
   getPRDetailsForWorkout,
+  calculateTotalWorkoutWeight,
+  getWorkoutWeightObject,
   type SetPRDetails,
 } from '../utils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -215,6 +217,14 @@ const WorkoutPage: React.FC = () => {
     }
     return getPRDetailsForWorkout(workout, allWorkouts);
   }, [workout, allWorkouts]);
+
+  const totalWeight = useMemo(() => {
+    return workout ? calculateTotalWorkoutWeight(workout) : 0;
+  }, [workout]);
+
+  const weightObj = useMemo(() => {
+    return getWorkoutWeightObject(totalWeight);
+  }, [totalWeight]);
 
   const handleShowHistory = (exerciseName: string) => {
     if (allWorkouts) {
@@ -466,6 +476,31 @@ const WorkoutPage: React.FC = () => {
                   <WorkspacePremiumIcon key={i} sx={{ color: '#FFD700', fontSize: '2rem' }} />
                 ))}
               </Box>
+            </Tooltip>
+          )}
+          {totalWeight > 0 && (
+            <Tooltip
+              title={
+                <Box sx={{ p: 0.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
+                    Total Weight Lifted:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
+                    {totalWeight.toLocaleString()} lbs
+                  </Typography>
+                  <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.8 }}>
+                    Equivalent to a {weightObj.name} ({weightObj.weight >= 1 ? `${weightObj.weight.toLocaleString()} lbs` : `${weightObj.weight} lbs`})
+                  </Typography>
+                </Box>
+              }
+              arrow
+            >
+              <Typography
+                component="span"
+                sx={{ fontSize: '2rem', cursor: 'default', display: 'inline-flex', alignItems: 'center' }}
+              >
+                {weightObj.emoji}
+              </Typography>
             </Tooltip>
           )}
         </Typography>
