@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Container,
   Typography,
@@ -13,17 +13,21 @@ import {
   Box,
   Paper,
   Button,
+  Collapse,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getWorkoutsForUser, calculateAllPRs, calculateTotalWorkoutWeight, getWorkoutWeightObject } from '../utils';
+import { getWorkoutsForUser, calculateAllPRs, calculateTotalWorkoutWeight, getWorkoutWeightObject, calculateOneRepMax } from '../utils';
 import { getUserProfile } from '../utils/database';
 
 const FriendWorkoutsPage: React.FC = () => {
   const { friendUid } = useParams<{ friendUid: string }>();
   const navigate = useNavigate();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data: profile } = useQuery({
     queryKey: ['friendProfile', friendUid],
@@ -47,6 +51,10 @@ const FriendWorkoutsPage: React.FC = () => {
   }, [workouts]);
 
   const friendName = profile?.displayName ?? 'Friend';
+
+  const handleToggle = (id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
 
   return (
     <Container sx={{ mt: 4, mb: 4 }}>
@@ -72,7 +80,7 @@ const FriendWorkoutsPage: React.FC = () => {
       )}
 
       {workouts && workouts.length > 0 && (
-        <List>
+        <List disablePadding>
           {(() => {
             let lastMonth: number | null = null;
             return workouts.map((workout) => {
@@ -85,9 +93,12 @@ const FriendWorkoutsPage: React.FC = () => {
               const prCount = workoutPRs.length;
               const totalWeight = calculateTotalWorkoutWeight(workout);
               const weightObj = getWorkoutWeightObject(totalWeight);
+              const workoutId = workout.id ?? workout.date.getTime().toString();
+              const isExpanded = expandedId === workoutId;
+
 
               return (
-                <React.Fragment key={workout.id}>
+                <React.Fragment key={workoutId}>
                   {monthChanged && (
                     <React.Fragment>
                       <Divider sx={{ my: 1 }} />
@@ -103,66 +114,119 @@ const FriendWorkoutsPage: React.FC = () => {
                     </React.Fragment>
                   )}
                   <ListItem disablePadding>
-                    {/* Read-only: no link to edit */}
-                    <ListItemButton
-                      sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                      disableRipple
-                    >
-                      <ListItemText
-                        primary={workout.exercises.map((e) => e.name).join(', ')}
-                        secondary={workout.date.toLocaleDateString()}
-                      />
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
-                        {prCount > 0 && (
-                          <Tooltip
-                            title={
-                              <Box sx={{ p: 0.5 }}>
-                                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.75rem' }}>
-                                  Personal Records Broken:
-                                </Typography>
-                                {workoutPRs.map((pr, index) => (
-                                  <Typography key={index} variant="caption" display="block">
-                                    • {pr.exerciseName} ({pr.type === 'E1RM' ? 'E1RM' : 'Max Weight'}): {pr.oldValue} → {pr.value} lbs
+                    <Box sx={{ width: '100%' }}>
+                      <ListItemButton
+                        onClick={() => handleToggle(workoutId)}
+                        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                      >
+                        <ListItemText
+                          primary={workout.exercises.map((e) => e.name).join(', ')}
+                          secondary={workout.date.toLocaleDateString()}
+                        />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
+                          {prCount > 0 && (
+                            <Tooltip
+                              title={
+                                <Box sx={{ p: 0.5 }}>
+                                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.75rem' }}>
+                                    Personal Records Broken:
                                   </Typography>
+                                  {workoutPRs.map((pr, index) => (
+                                    <Typography key={index} variant="caption" display="block">
+                                      • {pr.exerciseName} ({pr.type === 'E1RM' ? 'E1RM' : 'Max Weight'}): {pr.oldValue} → {pr.value} lbs
+                                    </Typography>
+                                  ))}
+                                </Box>
+                              }
+                              arrow
+                            >
+                              <Box sx={{ display: 'inline-flex', gap: 0.25 }}>
+                                {Array.from({ length: prCount }).map((_, i) => (
+                                  <WorkspacePremiumIcon key={i} sx={{ color: '#FFD700' }} />
                                 ))}
                               </Box>
-                            }
-                            arrow
-                          >
-                            <Box sx={{ display: 'inline-flex', gap: 0.25 }}>
-                              {Array.from({ length: prCount }).map((_, i) => (
-                                <WorkspacePremiumIcon key={i} sx={{ color: '#FFD700' }} />
-                              ))}
-                            </Box>
-                          </Tooltip>
-                        )}
-                        {totalWeight > 0 && (
-                          <Tooltip
-                            title={
-                              <Box sx={{ p: 0.5 }}>
-                                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
-                                  Total Weight Lifted:
-                                </Typography>
-                                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-                                  {totalWeight.toLocaleString()} lbs
-                                </Typography>
-                                <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.8 }}>
-                                  Equivalent to a {weightObj.name} ({weightObj.weight >= 1 ? `${weightObj.weight.toLocaleString()} lbs` : `${weightObj.weight} lbs`})
-                                </Typography>
-                              </Box>
-                            }
-                            arrow
-                          >
-                            <Typography
-                              component="span"
-                              sx={{ fontSize: '1.4rem', cursor: 'default', display: 'inline-flex', alignItems: 'center' }}
+                            </Tooltip>
+                          )}
+                          {totalWeight > 0 && (
+                            <Tooltip
+                              title={
+                                <Box sx={{ p: 0.5 }}>
+                                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
+                                    Total Weight Lifted:
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
+                                    {totalWeight.toLocaleString()} lbs
+                                  </Typography>
+                                  <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.8 }}>
+                                    Equivalent to a {weightObj.name} ({weightObj.weight >= 1 ? `${weightObj.weight.toLocaleString()} lbs` : `${weightObj.weight} lbs`})
+                                  </Typography>
+                                </Box>
+                              }
+                              arrow
                             >
-                              {weightObj.emoji}
-                            </Typography>
-                          </Tooltip>
-                        )}
-                      </Box>
-                    </ListItemButton>
+                              <Typography
+                                component="span"
+                                sx={{ fontSize: '1.4rem', cursor: 'default', display: 'inline-flex', alignItems: 'center' }}
+                              >
+                                {weightObj.emoji}
+                              </Typography>
+                            </Tooltip>
+                          )}
+                          {isExpanded ? (
+                            <ExpandLessIcon sx={{ color: 'text.secondary' }} />
+                          ) : (
+                            <ExpandMoreIcon sx={{ color: 'text.secondary' }} />
+                          )}
+                        </Box>
+                      </ListItemButton>
+
+                      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                        <Box
+                          sx={{
+                            px: 2,
+                            py: 1.5,
+                            mx: 1,
+                            mb: 1,
+                            borderRadius: 1,
+                            bgcolor: 'action.hover',
+                            borderLeft: '3px solid',
+                            borderColor: 'primary.main',
+                          }}
+                        >
+                          {workout.exercises.map((exercise, ei) => (
+                            <Box key={ei} sx={{ mb: ei < workout.exercises.length - 1 ? 1.5 : 0 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                {exercise.name}
+                              </Typography>
+                              {exercise.sets.map((set, si) => {
+                                const e1rm = calculateOneRepMax(set.weight, set.reps);
+                                return (
+                                  <Box
+                                    key={si}
+                                    sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 1.5,
+                                      ml: 1,
+                                      mb: 0.25,
+                                    }}
+                                  >
+                                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem', minWidth: 100 }}>
+                                      {set.weight} lbs × {set.reps}
+                                    </Typography>
+                                    {e1rm > 0 && set.reps > 0 && (
+                                      <Typography variant="caption" color="text.secondary">
+                                        E1RM: ~{e1rm} lbs
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                          ))}
+                        </Box>
+                      </Collapse>
+                    </Box>
                   </ListItem>
                 </React.Fragment>
               );
