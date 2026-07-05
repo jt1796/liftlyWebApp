@@ -47,21 +47,30 @@ service cloud.firestore {
 
     // ─── Custom Exercises ─────────────────────────────────────────────────────
     match /customExercises/{userId} {
-      allow read, create, update: if request.auth != null
+      allow read: if request.auth != null
+        && isAllowedUser()
+        && (request.auth.uid == userId || isAcceptedFriend(userId));
+      allow create, update: if request.auth != null
         && request.auth.uid == userId
         && isAllowedUser();
     }
 
     // ─── Templates ────────────────────────────────────────────────────────────
     match /templates/{userId} {
-      allow read, create, update: if request.auth != null
+      allow read: if request.auth != null
+        && isAllowedUser()
+        && (request.auth.uid == userId || isAcceptedFriend(userId));
+      allow create, update: if request.auth != null
         && request.auth.uid == userId
         && isAllowedUser();
     }
 
     // ─── Scripts ──────────────────────────────────────────────────────────────
     match /scripts/{userId} {
-      allow read, create, update: if request.auth != null
+      allow read: if request.auth != null
+        && isAllowedUser()
+        && (request.auth.uid == userId || isAcceptedFriend(userId));
+      allow create, update: if request.auth != null
         && request.auth.uid == userId
         && isAllowedUser();
     }

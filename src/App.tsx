@@ -14,6 +14,8 @@ import Dashboard from './components/Dashboard';
 import FriendsPage from './components/FriendsPage';
 import FriendWorkoutsPage from './components/FriendWorkoutsPage';
 import FriendRecordsPage from './components/FriendRecordsPage';
+import FriendTemplatesPage from './components/FriendTemplatesPage';
+import FriendScriptsPage from './components/FriendScriptsPage';
 import {
   createTheme,
   ThemeProvider,
@@ -48,6 +50,8 @@ function App() {
             <Route path="/friends" element={<FriendsPage />} />
             <Route path="/friends/:friendUid/workouts" element={<FriendWorkoutsPage />} />
             <Route path="/friends/:friendUid/records" element={<FriendRecordsPage />} />
+            <Route path="/friends/:friendUid/templates" element={<FriendTemplatesPage />} />
+            <Route path="/friends/:friendUid/scripts" element={<FriendScriptsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

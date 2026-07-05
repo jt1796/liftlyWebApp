@@ -29,6 +29,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
+import ConstructionIcon from '@mui/icons-material/Construction';
+import TerminalIcon from '@mui/icons-material/Terminal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth-context-utils';
@@ -136,6 +138,22 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
             id={`view-workouts-${friendUid}`}
           >
             <FitnessCenterIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="View templates">
+          <IconButton
+            onClick={() => navigate(`/friends/${friendUid}/templates`)}
+            id={`view-templates-${friendUid}`}
+          >
+            <ConstructionIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="View scripts">
+          <IconButton
+            onClick={() => navigate(`/friends/${friendUid}/scripts`)}
+            id={`view-scripts-${friendUid}`}
+          >
+            <TerminalIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="View records">

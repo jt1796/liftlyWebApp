@@ -44,6 +44,8 @@ The project follows a standard React application structure:
         *   `FriendsPage.tsx`: Manage friends — displays the user's shareable invite code (based on UID), a friend-code lookup/add flow, and a tabbed list of accepted friends and pending requests. Friends can navigate to each other's workouts and records.
         *   `FriendWorkoutsPage.tsx`: Read-only view of a friend's workout history. Accessed at `/friends/:friendUid/workouts`.
         *   `FriendRecordsPage.tsx`: Read-only view of a friend's exercise metrics and PRs. Accessed at `/friends/:friendUid/records`.
+        *   `FriendTemplatesPage.tsx`: Read-only view of a friend's templates list with functionality to start a workout or import/copy templates. Accessed at `/friends/:friendUid/templates`.
+        *   `FriendScriptsPage.tsx`: Read-only view of a friend's scripts with functionality to execute, debug, or import/copy scripts. Accessed at `/friends/:friendUid/scripts`.
     *   `contexts/`: Contains React contexts for managing application-wide state.
         *   `AuthContext.tsx`: Provides an `AuthProvider` component to manage user authentication state using Firebase. It makes the current user, loading status, and logout function available to its children.
         *   `auth-context-utils.ts`: Defines the `AuthContext` and a `useAuth` hook for components to easily access authentication state.
