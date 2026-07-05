@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js';
-import type { Workout } from '../types';
+import type { Workout, Template } from '../types';
 import dayjs from 'dayjs';
 
 export const createFilterOptions = (allExercises: string[]) => {
@@ -566,3 +566,38 @@ export const getWorkoutWeightObject = (totalWeight: number): WeightObject => {
   }
   return WEIGHT_OBJECTS[0];
 };
+
+export const workoutToTemplate = (workout: Workout, templateName: string): Template => {
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return {
+    id: generateId(),
+    name: templateName,
+    exercises: workout.exercises.map((exercise) => {
+      let maxE1RM = 0;
+      for (const set of exercise.sets) {
+        const weight = isNaN(set.weight) ? 0 : set.weight;
+        const reps = isNaN(set.reps) ? 0 : set.reps;
+        const e1rm = calculateOneRepMax(weight, reps);
+        if (e1rm > maxE1RM) {
+          maxE1RM = e1rm;
+        }
+      }
+
+      return {
+        id: exercise.id || generateId(),
+        name: exercise.name,
+        sets: exercise.sets.map((set) => {
+          const weight = isNaN(set.weight) ? 0 : set.weight;
+          const reps = isNaN(set.reps) ? 0 : set.reps;
+          const percentage = maxE1RM > 0 ? Math.round((weight / maxE1RM) * 100) : 0;
+          return {
+            id: set.id || generateId(),
+            weight: percentage,
+            reps: reps,
+          };
+        }),
+      };
+    }),
+  };
+};
+

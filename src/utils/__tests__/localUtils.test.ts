@@ -10,6 +10,7 @@ import {
   getPRDetailsForWorkout,
   calculateTotalWorkoutWeight,
   getWorkoutWeightObject,
+  workoutToTemplate,
 } from '../localUtils';
 import type { Workout } from '../../types';
 
@@ -531,6 +532,39 @@ describe('localUtils', () => {
       expect(getWorkoutWeightObject(50).emoji).toBe('🪵');
       expect(getWorkoutWeightObject(1000).emoji).toBe('🐎');
       expect(getWorkoutWeightObject(500000).emoji).toBe('🚂');
+    });
+  });
+
+  describe('workoutToTemplate', () => {
+    it('should correctly convert a workout to a template with calculated 1RM percentages', () => {
+      const workout: Workout = {
+        date: new Date(),
+        exercises: [
+          {
+            name: 'Bench Press',
+            sets: [
+              { weight: 100, reps: 5 }, // 100 * (1 + 5/30) = 117 E1RM
+              { weight: 120, reps: 1 }, // 120 * 1 = 120 E1RM (Max E1RM for Bench Press)
+            ],
+          },
+        ],
+      };
+
+      const templateName = 'My Test Template';
+      const template = workoutToTemplate(workout, templateName);
+
+      expect(template.name).toBe(templateName);
+      expect(template.exercises).toHaveLength(1);
+      expect(template.exercises[0].name).toBe('Bench Press');
+      expect(template.exercises[0].sets).toHaveLength(2);
+
+      // Set 1 weight: Math.round(100 / 120 * 100) = 83%
+      expect(template.exercises[0].sets[0].weight).toBe(83);
+      expect(template.exercises[0].sets[0].reps).toBe(5);
+
+      // Set 2 weight: Math.round(120 / 120 * 100) = 100%
+      expect(template.exercises[0].sets[1].weight).toBe(100);
+      expect(template.exercises[0].sets[1].reps).toBe(1);
     });
   });
 });

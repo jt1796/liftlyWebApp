@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Workout, Exercise, Set } from '../types';
+import type { Workout, Exercise, Set, Template } from '../types';
 import { exercises as exerciseList } from '../data/exercises';
 import {
   Container,
@@ -20,6 +20,10 @@ import {
   Snackbar,
   ButtonGroup,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -43,6 +47,9 @@ import {
   calculateTotalWorkoutWeight,
   getWorkoutWeightObject,
   type SetPRDetails,
+  getTemplates,
+  saveTemplates,
+  workoutToTemplate,
 } from '../utils';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -87,6 +94,9 @@ const WorkoutPage: React.FC = () => {
   const [exerciseHistory, setExerciseHistory] = useState<(Workout & { exercise: Exercise; })[]>([]);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [historyExerciseName, setHistoryExerciseName] = useState('');
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [templateDraft, setTemplateDraft] = useState<Template | null>(null);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
   const {
     data: fetchedWorkout,
@@ -316,6 +326,47 @@ const WorkoutPage: React.FC = () => {
       setShowSnackbar(true);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleCreateTemplateClick = () => {
+    if (!workout) return;
+    const defaultName = `Template from ${dayjs(workout.date).format('MMMM D, YYYY')}`;
+    const draft = workoutToTemplate(workout, defaultName);
+    setTemplateDraft(draft);
+    setIsTemplateDialogOpen(true);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!currentUser || !templateDraft) return;
+
+    const name = templateDraft.name.trim();
+    if (!name) {
+      setSnackbarMessage('Template name cannot be empty.');
+      setSnackbarSeverity('error');
+      setShowSnackbar(true);
+      return;
+    }
+
+    setIsSavingTemplate(true);
+    try {
+      const existingTemplates = await getTemplates(currentUser.uid);
+      const updatedTemplates = [...existingTemplates, templateDraft];
+      await saveTemplates(currentUser.uid, updatedTemplates);
+
+      await queryClient.invalidateQueries({ queryKey: ['templates', currentUser.uid] });
+
+      setSnackbarMessage(`Template "${name}" created successfully!`);
+      setSnackbarSeverity('success');
+      setShowSnackbar(true);
+      setIsTemplateDialogOpen(false);
+    } catch (error) {
+      console.error('Error saving template:', error);
+      setSnackbarMessage('Error creating template.');
+      setSnackbarSeverity('error');
+      setShowSnackbar(true);
+    } finally {
+      setIsSavingTemplate(false);
     }
   };
 
@@ -690,11 +741,16 @@ const WorkoutPage: React.FC = () => {
         <Button onClick={addExercise} variant="outlined">Add Exercise</Button>
       </Box>
 
-      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2, flexWrap: 'wrap' }}>
         {id && (
-          <Button variant="outlined" color="error" onClick={handleDeleteWorkout} disabled={isSaving} startIcon={<DeleteIcon />}>
-            Delete Workout
-          </Button>
+          <>
+            <Button variant="outlined" color="error" onClick={handleDeleteWorkout} disabled={isSaving} startIcon={<DeleteIcon />}>
+              Delete Workout
+            </Button>
+            <Button variant="outlined" color="secondary" onClick={handleCreateTemplateClick} disabled={isSaving} startIcon={<ContentCopyIcon />}>
+              Create Template
+            </Button>
+          </>
         )}
         <Button variant="contained" color="primary" onClick={handleSaveWorkout} disabled={isSaving}>
           {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save Workout'}
@@ -726,6 +782,56 @@ const WorkoutPage: React.FC = () => {
         exerciseHistory={exerciseHistory}
         exerciseName={historyExerciseName}
       />
+      <Dialog
+        open={isTemplateDialogOpen}
+        onClose={() => !isSavingTemplate && setIsTemplateDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Create Template from Workout</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Template Name"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={templateDraft?.name || ''}
+            onChange={(e) =>
+              setTemplateDraft((prev) => (prev ? { ...prev, name: e.target.value } : null))
+            }
+            sx={{ mb: 3, mt: 1 }}
+          />
+          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+            Exercises & Calculated 1RM Percentages
+          </Typography>
+          <Stack spacing={2}>
+            {templateDraft?.exercises.map((exercise, idx) => (
+              <Box key={exercise.id || idx} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  {exercise.name}
+                </Typography>
+                <Stack spacing={0.5}>
+                  {exercise.sets.map((set, setIdx) => (
+                    <Typography key={set.id || setIdx} variant="body2" color="text.secondary">
+                      Set {setIdx + 1}: {set.reps} reps @ {set.weight}% 1RM
+                    </Typography>
+                  ))}
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsTemplateDialogOpen(false)} disabled={isSavingTemplate}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveTemplate} variant="contained" disabled={isSavingTemplate}>
+            {isSavingTemplate ? <CircularProgress size={24} /> : 'Save Template'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -30,11 +30,11 @@ The project follows a standard React application structure:
     *   `utils/`: Contains utility functions.
         *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data, workout templates, user scripts, user profiles, and friendships.
         *   `scriptExecutor.ts`: Executes user-provided JavaScript snippets in a Web Worker sandbox to generate new workouts based on history.
-        *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs) including real-time details (`getPRDetailsForWorkout`), analyzing exercise metrics, generating E1RM suggestions, converting workout data to text, getting exercise history, calculating total workout weight (`calculateTotalWorkoutWeight`), and matching weight to progressive ascii/emoji objects (`getWorkoutWeightObject`).
+        *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs) including real-time details (`getPRDetailsForWorkout`), analyzing exercise metrics, generating E1RM suggestions, converting workout data to text, getting exercise history, calculating total workout weight (`calculateTotalWorkoutWeight`), matching weight to progressive ascii/emoji objects (`getWorkoutWeightObject`), and converting workouts to templates with calculated 1RM percentages (`workoutToTemplate`).
     *   `components/`: Contains reusable React components.
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
         *   `LoginPage.tsx`: Handles user authentication.
-        *   `WorkoutPage.tsx`: Core component for creating and editing workouts. Supports drag-and-drop re-ordering of exercises and sets.
+        *   `WorkoutPage.tsx`: Core component for creating and editing workouts. Supports drag-and-drop re-ordering of exercises and sets, and creating templates of saved workouts with computed 1RM percentages.
         *   `WorkoutListPage.tsx`: A component for listing workouts.
         *   `ExercisesPage.tsx`: A component for managing custom exercises.
         *   `TemplatesPage.tsx`: A component for creating and managing workout templates.
