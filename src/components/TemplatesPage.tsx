@@ -405,6 +405,7 @@ const TemplatesPage = () => {
             onChange={(e) =>
               setSelectedTemplate({ ...selectedTemplate, name: e.target.value })
             }
+            onFocus={(e) => e.target.select()}
             sx={{mb: 2}}
           />
           {selectedTemplate.exercises.map((exercise, exerciseIndex) => (
@@ -431,6 +432,7 @@ const TemplatesPage = () => {
                         label="1RM %"
                         value={set.weight}
                         sx={{ width: '120px' }}
+                        onFocus={(e) => e.target.select()}
                         InputProps={{ inputProps: { min: 0, max: 100 } }}
                         onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseFloat(e.target.value))}
                     />
@@ -439,6 +441,7 @@ const TemplatesPage = () => {
                         label="Reps"
                         value={set.reps}
                         sx={{ width: '100px' }}
+                        onFocus={(e) => e.target.select()}
                         InputProps={{ inputProps: { min: 0 } }}
                         onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
                     />
@@ -478,6 +481,7 @@ const TemplatesPage = () => {
                 label={`${exName} 1RM`}
                 type="number"
                 value={rmsToUse[exName]}
+                onFocus={(e) => e.target.select()}
                 onChange={(e) => setRmsToUse({ ...rmsToUse, [exName]: parseFloat(e.target.value) || 0 })}
                 fullWidth
               />

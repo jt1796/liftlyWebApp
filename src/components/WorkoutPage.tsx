@@ -801,6 +801,7 @@ const WorkoutPage: React.FC = () => {
             onChange={(e) =>
               setTemplateDraft((prev) => (prev ? { ...prev, name: e.target.value } : null))
             }
+            onFocus={(e) => e.target.select()}
             sx={{ mb: 3, mt: 1 }}
           />
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
