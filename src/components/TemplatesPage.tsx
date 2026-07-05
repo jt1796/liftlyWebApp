@@ -430,7 +430,7 @@ const TemplatesPage = () => {
                         type="number"
                         label="1RM %"
                         value={set.weight}
-                        sx={{ maxWidth: '120px' }}
+                        sx={{ width: '120px' }}
                         InputProps={{ inputProps: { min: 0, max: 100 } }}
                         onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseFloat(e.target.value))}
                     />
@@ -438,7 +438,7 @@ const TemplatesPage = () => {
                         type="number"
                         label="Reps"
                         value={set.reps}
-                        sx={{ maxWidth: '100px' }}
+                        sx={{ width: '100px' }}
                         InputProps={{ inputProps: { min: 0 } }}
                         onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
                     />
