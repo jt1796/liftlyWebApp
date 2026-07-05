@@ -16,7 +16,6 @@ import {
   IconButton,
   Chip,
   Tooltip,
-  Paper,
   Tab,
   Tabs,
   Snackbar,
@@ -25,6 +24,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -35,6 +37,7 @@ import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import TerminalIcon from '@mui/icons-material/Terminal';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth-context-utils';
@@ -354,125 +357,10 @@ const FriendsPage = () => {
         Friends
       </Typography>
 
-      {/* ─── Your Invite Code ─────────────────────────────────────── */}
-      <Paper variant="outlined" sx={{ p: 3, mb: 4 }}>
-        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-          Your Invite Code
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Share this code with a friend. They can paste it below to send you a
-          friend request.
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <TextField
-            value={formatInviteCode(currentUser.uid)}
-            fullWidth
-            size="small"
-            inputProps={{ readOnly: true, id: 'invite-code-field' }}
-            sx={{ fontFamily: 'monospace' }}
-          />
-          <Tooltip title="Copy code">
-            <Button
-              id="copy-invite-code-btn"
-              variant="contained"
-              startIcon={<ContentCopyIcon />}
-              onClick={handleCopyCode}
-              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-            >
-              Copy
-            </Button>
-          </Tooltip>
-        </Box>
-      </Paper>
-
-      {/* ─── Add a Friend ─────────────────────────────────────────── */}
-      <Paper variant="outlined" sx={{ p: 3, mb: 4 }}>
-        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-          Add a Friend
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Enter your friend's invite code to send them a request.
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-          <TextField
-            id="friend-code-input"
-            label="Friend's invite code"
-            value={codeInput}
-            onChange={(e) => {
-              setCodeInput(e.target.value);
-              setLookupProfile(null);
-            }}
-            fullWidth
-            size="small"
-            onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
-          />
-          <Button
-            id="lookup-friend-btn"
-            variant="outlined"
-            onClick={handleLookup}
-            disabled={!codeInput.trim() || lookupLoading}
-            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-          >
-            {lookupLoading ? <CircularProgress size={20} /> : 'Look up'}
-          </Button>
-        </Box>
-
-        {lookupProfile === 'not-found' && (
-          <Alert severity="error">No user found with that invite code.</Alert>
-        )}
-
-        {lookupProfile && lookupProfile !== 'not-found' && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              p: 1.5,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
-            }}
-          >
-            <Avatar
-              src={lookupProfile.photoURL ?? undefined}
-              alt={lookupProfile.displayName ?? ''}
-            >
-              {(lookupProfile.displayName ?? '?')[0].toUpperCase()}
-            </Avatar>
-            <Typography sx={{ flex: 1 }}>
-              {lookupProfile.displayName ?? 'Unknown user'}
-            </Typography>
-            {alreadyFriends(lookupProfile.uid) ? (
-              <Chip label="Already friends / requested" size="small" />
-            ) : (
-              <Button
-                id="send-friend-request-btn"
-                variant="contained"
-                startIcon={<PersonAddIcon />}
-                onClick={() => sendRequestMutation.mutate(lookupProfile.uid)}
-                disabled={sendRequestMutation.isPending}
-              >
-                {sendRequestMutation.isPending ? 'Sending…' : 'Add Friend'}
-              </Button>
-            )}
-          </Box>
-        )}
-
-        {sendRequestMutation.isError && (
-          <Alert severity="error" sx={{ mt: 1 }}>
-            {(sendRequestMutation.error as Error).message}
-          </Alert>
-        )}
-      </Paper>
-
       {/* ─── Friends List ─────────────────────────────────────────── */}
-      <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-        My Friends
-      </Typography>
-
-      {friendshipsLoading && <CircularProgress />}
+      {friendshipsLoading && <CircularProgress sx={{ display: 'block', my: 2 }} />}
       {friendshipsError && (
-        <Alert severity="error">
+        <Alert severity="error" sx={{ mb: 2 }}>
           {(friendshipsError as Error).message}
         </Alert>
       )}
@@ -518,7 +406,7 @@ const FriendsPage = () => {
                   color="text.secondary"
                   sx={{ p: 2, textAlign: 'center' }}
                 >
-                  No friends yet. Share your invite code to get started!
+                  No friends yet. Expand the section below to share your invite code and get started!
                 </Typography>
               ) : (
                 accepted.map((f) => (
@@ -556,6 +444,135 @@ const FriendsPage = () => {
           )}
         </>
       )}
+
+      {/* ─── Expandable Invite Code / Add Friend Box ─────────────── */}
+      <Accordion variant="outlined" sx={{ mt: 4, mb: 2 }} id="invite-add-friend-accordion">
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          id="invite-add-friend-header"
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PersonAddIcon color="primary" />
+            <Typography variant="subtitle1" fontWeight="bold">
+              Add Friend / Share Invite Code
+            </Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 3, pb: 3 }}>
+          {/* Your Invite Code */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+              Your Invite Code
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Share this code with a friend. They can paste it below to send you a
+              friend request.
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TextField
+                value={formatInviteCode(currentUser.uid)}
+                fullWidth
+                size="small"
+                inputProps={{ readOnly: true, id: 'invite-code-field' }}
+                sx={{ fontFamily: 'monospace' }}
+              />
+              <Tooltip title="Copy code">
+                <Button
+                  id="copy-invite-code-btn"
+                  variant="contained"
+                  startIcon={<ContentCopyIcon />}
+                  onClick={handleCopyCode}
+                  sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                >
+                  Copy
+                </Button>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Add a Friend */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+              Add a Friend
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Enter your friend's invite code to send them a request.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                id="friend-code-input"
+                label="Friend's invite code"
+                value={codeInput}
+                onChange={(e) => {
+                  setCodeInput(e.target.value);
+                  setLookupProfile(null);
+                }}
+                fullWidth
+                size="small"
+                onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
+              />
+              <Button
+                id="lookup-friend-btn"
+                variant="outlined"
+                onClick={handleLookup}
+                disabled={!codeInput.trim() || lookupLoading}
+                sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                {lookupLoading ? <CircularProgress size={20} /> : 'Look up'}
+              </Button>
+            </Box>
+
+            {lookupProfile === 'not-found' && (
+              <Alert severity="error">No user found with that invite code.</Alert>
+            )}
+
+            {lookupProfile && lookupProfile !== 'not-found' && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  p: 1.5,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                }}
+              >
+                <Avatar
+                  src={lookupProfile.photoURL ?? undefined}
+                  alt={lookupProfile.displayName ?? ''}
+                >
+                  {(lookupProfile.displayName ?? '?')[0].toUpperCase()}
+                </Avatar>
+                <Typography sx={{ flex: 1 }}>
+                  {lookupProfile.displayName ?? 'Unknown user'}
+                </Typography>
+                {alreadyFriends(lookupProfile.uid) ? (
+                  <Chip label="Already friends / requested" size="small" />
+                ) : (
+                  <Button
+                    id="send-friend-request-btn"
+                    variant="contained"
+                    startIcon={<PersonAddIcon />}
+                    onClick={() => sendRequestMutation.mutate(lookupProfile.uid)}
+                    disabled={sendRequestMutation.isPending}
+                  >
+                    {sendRequestMutation.isPending ? 'Sending…' : 'Add Friend'}
+                  </Button>
+                )}
+              </Box>
+            )}
+
+            {sendRequestMutation.isError && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                {(sendRequestMutation.error as Error).message}
+              </Alert>
+            )}
+          </Box>
+        </AccordionDetails>
+      </Accordion>
 
       <Snackbar
         open={!!snackbar}
