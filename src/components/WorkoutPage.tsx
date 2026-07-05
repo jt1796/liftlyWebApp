@@ -745,7 +745,7 @@ const WorkoutPage: React.FC = () => {
         {id && (
           <>
             <Button variant="outlined" color="error" onClick={handleDeleteWorkout} disabled={isSaving} startIcon={<DeleteIcon />}>
-              Delete Workout
+              Delete
             </Button>
             <Button variant="outlined" color="secondary" onClick={handleCreateTemplateClick} disabled={isSaving} startIcon={<ContentCopyIcon />}>
               Create Template
@@ -753,7 +753,7 @@ const WorkoutPage: React.FC = () => {
           </>
         )}
         <Button variant="contained" color="primary" onClick={handleSaveWorkout} disabled={isSaving}>
-          {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save Workout'}
+          {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Save'}
         </Button>
       </Box>
 
