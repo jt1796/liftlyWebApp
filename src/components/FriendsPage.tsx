@@ -21,6 +21,11 @@ import {
   Tab,
   Tabs,
   Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -77,6 +82,8 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
     mutationFn: () => removeFriendship(currentUid, friendUid),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['friendships'] }),
   });
+
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   if (friendship.status === 'pending') {
     return (
@@ -168,7 +175,7 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
           <span>
             <IconButton
               color="error"
-              onClick={() => removeMutation.mutate()}
+              onClick={() => setIsConfirmOpen(true)}
               disabled={removeMutation.isPending}
               id={`remove-friend-${friendUid}`}
             >
@@ -177,6 +184,37 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
           </span>
         </Tooltip>
       </ListItemSecondaryAction>
+
+      <Dialog
+        open={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        aria-labelledby={`remove-friend-title-${friendUid}`}
+        aria-describedby={`remove-friend-desc-${friendUid}`}
+      >
+        <DialogTitle id={`remove-friend-title-${friendUid}`}>
+          Remove Friend
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id={`remove-friend-desc-${friendUid}`}>
+            Are you sure you want to remove {displayName} from your friends list?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsConfirmOpen(false)}>Cancel</Button>
+          <Button
+            onClick={() => {
+              removeMutation.mutate();
+              setIsConfirmOpen(false);
+            }}
+            color="error"
+            variant="contained"
+            autoFocus
+            id={`confirm-remove-friend-${friendUid}`}
+          >
+            Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ListItem>
   );
 };
