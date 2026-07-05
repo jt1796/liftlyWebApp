@@ -99,10 +99,24 @@ const WorkoutListPage: React.FC = () => {
                             }
                             arrow
                           >
-                            <Box sx={{ display: 'inline-flex', gap: 0.25 }}>
-                              {Array.from({ length: prCount }).map((_, i) => (
-                                <WorkspacePremiumIcon key={i} sx={{ color: '#FFD700' }} />
-                              ))}
+                            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                              <WorkspacePremiumIcon sx={{ color: '#FFD700' }} />
+                              {prCount > 1 && (
+                                <Typography
+                                  component="sup"
+                                  sx={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'bold',
+                                    color: '#FFD700',
+                                    ml: 0.25,
+                                    alignSelf: 'flex-start',
+                                    lineHeight: 1,
+                                    mt: -0.25,
+                                  }}
+                                >
+                                  {prCount}
+                                </Typography>
+                              )}
                             </Box>
                           </Tooltip>
                         )}

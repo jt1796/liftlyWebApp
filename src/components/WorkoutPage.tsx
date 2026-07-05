@@ -471,10 +471,24 @@ const WorkoutPage: React.FC = () => {
               }
               arrow
             >
-              <Box sx={{ display: 'inline-flex', gap: 0.25 }}>
-                {Array.from({ length: prDetails.workoutPRCount }).map((_, i) => (
-                  <WorkspacePremiumIcon key={i} sx={{ color: '#FFD700', fontSize: '2rem' }} />
-                ))}
+              <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+                <WorkspacePremiumIcon sx={{ color: '#FFD700', fontSize: '2rem' }} />
+                {prDetails.workoutPRCount > 1 && (
+                  <Typography
+                    component="sup"
+                    sx={{
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
+                      color: '#FFD700',
+                      ml: 0.25,
+                      alignSelf: 'flex-start',
+                      lineHeight: 1,
+                      mt: -0.25,
+                    }}
+                  >
+                    {prDetails.workoutPRCount}
+                  </Typography>
+                )}
               </Box>
             </Tooltip>
           )}
