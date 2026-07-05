@@ -13,7 +13,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Chip,
   Tooltip,
@@ -87,17 +86,35 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
 
   if (friendship.status === 'pending') {
     return (
-      <ListItem divider>
-        <ListItemAvatar>
-          <Avatar src={profile?.photoURL ?? undefined} alt={displayName}>
-            {displayName[0]?.toUpperCase()}
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText
-          primary={displayName}
-          secondary={isIncoming ? 'Wants to be your friend' : 'Request sent'}
-        />
-        <ListItemSecondaryAction sx={{ display: 'flex', gap: 1 }}>
+      <ListItem
+        divider
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 1, sm: 0 },
+          py: { xs: 1.5, sm: 1 },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
+          <ListItemAvatar>
+            <Avatar src={profile?.photoURL ?? undefined} alt={displayName}>
+              {displayName[0]?.toUpperCase()}
+            </Avatar>
+          </ListItemAvatar>
+          <ListItemText
+            primary={displayName}
+            secondary={isIncoming ? 'Wants to be your friend' : 'Request sent'}
+          />
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            ml: { xs: 7, sm: 'auto' },
+            mt: { xs: 0.5, sm: 0 },
+          }}
+        >
           {isIncoming && (
             <Tooltip title="Accept">
               <span>
@@ -124,21 +141,40 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
               </IconButton>
             </span>
           </Tooltip>
-        </ListItemSecondaryAction>
+        </Box>
       </ListItem>
     );
   }
 
   // Accepted friend
   return (
-    <ListItem divider>
-      <ListItemAvatar>
-        <Avatar src={profile?.photoURL ?? undefined} alt={displayName}>
-          {displayName[0]?.toUpperCase()}
-        </Avatar>
-      </ListItemAvatar>
-      <ListItemText primary={displayName} />
-      <ListItemSecondaryAction sx={{ display: 'flex', gap: 0.5 }}>
+    <ListItem
+      divider
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 1, sm: 0 },
+        py: { xs: 1.5, sm: 1 },
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
+        <ListItemAvatar>
+          <Avatar src={profile?.photoURL ?? undefined} alt={displayName}>
+            {displayName[0]?.toUpperCase()}
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText primary={displayName} />
+      </Box>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 0.5,
+          ml: { xs: 7, sm: 'auto' },
+          mt: { xs: 0.5, sm: 0 },
+          flexWrap: 'wrap',
+        }}
+      >
         <Tooltip title="View workouts">
           <IconButton
             onClick={() => navigate(`/friends/${friendUid}/workouts`)}
@@ -183,7 +219,7 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
             </IconButton>
           </span>
         </Tooltip>
-      </ListItemSecondaryAction>
+      </Box>
 
       <Dialog
         open={isConfirmOpen}
