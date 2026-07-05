@@ -390,11 +390,23 @@ const TemplatesPage = () => {
         </DragDropContext>
       )}
 
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="md">
-        <DialogTitle>
+      <Dialog
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        fullWidth
+        maxWidth="md"
+        sx={{
+          '& .MuiDialog-paper': {
+            m: { xs: 1.5, sm: 2, md: 3 },
+            width: { xs: 'calc(100% - 24px)', sm: 'calc(100% - 32px)', md: '100%' },
+            maxHeight: { xs: 'calc(100% - 24px)', sm: 'calc(100% - 32px)', md: 'calc(100% - 64px)' },
+          },
+        }}
+      >
+        <DialogTitle sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>
           {editingTemplateIndex !== null ? 'Edit Template' : 'Create New Template'}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 1.5, sm: 2.5 } }}>
           <TextField
             autoFocus
             margin="dense"
@@ -410,8 +422,8 @@ const TemplatesPage = () => {
           />
           {selectedTemplate.exercises.map((exercise, exerciseIndex) => (
             <Card key={exercise.id || exerciseIndex} sx={{ mt: 2 }}>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
+                <Stack direction="row" spacing={{ xs: 1, sm: 2 }} alignItems="center">
                   <FormControl fullWidth>
                     <Autocomplete
                       value={exercise.name}
@@ -426,12 +438,12 @@ const TemplatesPage = () => {
                   </IconButton>
                 </Stack>
                 {exercise.sets.map((set, setIndex) => (
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }} key={set.id || setIndex}>
+                  <Stack direction="row" spacing={{ xs: 1, sm: 2 }} alignItems="center" sx={{ mt: 2 }} key={set.id || setIndex}>
                     <TextField
                         type="number"
                         label="1RM %"
                         value={set.weight}
-                        sx={{ width: '120px' }}
+                        sx={{ width: { xs: '85px', sm: '120px' } }}
                         onFocus={(e) => e.target.select()}
                         InputProps={{ inputProps: { min: 0, max: 100 } }}
                         onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseFloat(e.target.value))}
@@ -440,7 +452,7 @@ const TemplatesPage = () => {
                         type="number"
                         label="Reps"
                         value={set.reps}
-                        sx={{ width: '100px' }}
+                        sx={{ width: { xs: '75px', sm: '100px' } }}
                         onFocus={(e) => e.target.select()}
                         InputProps={{ inputProps: { min: 0 } }}
                         onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
@@ -451,7 +463,7 @@ const TemplatesPage = () => {
                   </Stack>
                 ))}
               </CardContent>
-              <CardActions>
+              <CardActions sx={{ px: { xs: 1.5, sm: 2 }, pb: { xs: 1.5, sm: 2 }, pt: 0 }}>
                 <Button onClick={() => addSet(exerciseIndex)} size="small">Add Set</Button>
               </CardActions>
             </Card>
@@ -460,7 +472,7 @@ const TemplatesPage = () => {
                 <Button onClick={addExercise} variant="outlined">Add Exercise</Button>
             </Box>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>
           <Button onClick={handleCloseDialog}>Cancel</Button>
           <Button onClick={handleSaveTemplate} variant="contained" disabled={mutation.isPending}>
             {mutation.isPending ? <CircularProgress size={24} /> : 'Save'}
@@ -468,9 +480,20 @@ const TemplatesPage = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={isRmDialogOpen} onClose={() => setIsRmDialogOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>Enter 1RMs for Workout</DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={isRmDialogOpen}
+        onClose={() => setIsRmDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        sx={{
+          '& .MuiDialog-paper': {
+            m: { xs: 1.5, sm: 2 },
+            width: { xs: 'calc(100% - 24px)', sm: 'auto' },
+          },
+        }}
+      >
+        <DialogTitle sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>Enter 1RMs for Workout</DialogTitle>
+        <DialogContent sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 1.5, sm: 2.5 } }}>
           <Typography variant="body2" sx={{ mb: 2 }}>
             Enter your current 1 Rep Max for each exercise to calculate the weights for this session.
           </Typography>
@@ -488,7 +511,7 @@ const TemplatesPage = () => {
             ))}
           </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>
           <Button onClick={() => setIsRmDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleConfirmStartWorkout} variant="contained">Start</Button>
         </DialogActions>
