@@ -195,30 +195,11 @@ const CalculatorPage: React.FC = () => {
     setActiveTab(newValue);
   };
 
-  const bannerBg = darkMode === 'dark'
-    ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-    : 'linear-gradient(135deg, #3f51b5 0%, #1a237e 100%)';
-
   return (
     <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 }, px: { xs: 1, sm: 3 } }}>
-      {/* Banner */}
-      <Box
-        sx={{
-          background: bannerBg,
-          color: 'white',
-          p: { xs: 3, md: 4 },
-          borderRadius: 2,
-          mb: 4,
-          boxShadow: 3,
-        }}
-      >
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-          Calculators
-        </Typography>
-        <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-          Plan your training sessions, optimize your progression, and estimate your 1-rep max capabilities.
-        </Typography>
-      </Box>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+        Calculators
+      </Typography>
 
       {/* Tabs Selector */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
