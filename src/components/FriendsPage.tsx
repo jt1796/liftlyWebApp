@@ -47,8 +47,10 @@ import {
   sendFriendRequest,
   acceptFriendRequest,
   removeFriendship,
+  getWorkoutsForUser,
 } from '../utils/database';
 import type { Friendship, UserProfile } from '../types';
+import WorkoutHeatmap from './WorkoutHeatmap';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -86,6 +88,12 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
   });
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const { data: workouts, isLoading: workoutsLoading } = useQuery({
+    queryKey: ['workouts', friendUid],
+    queryFn: () => getWorkoutsForUser(friendUid),
+    enabled: friendship.status === 'accepted',
+  });
 
   if (friendship.status === 'pending') {
     return (
@@ -155,73 +163,93 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
       divider
       sx={{
         display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        gap: { xs: 1, sm: 0 },
-        py: { xs: 1.5, sm: 1 },
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        py: 1.5,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
-        <ListItemAvatar>
-          <Avatar src={profile?.photoURL ?? undefined} alt={displayName}>
-            {displayName[0]?.toUpperCase()}
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText primary={displayName} />
-      </Box>
       <Box
         sx={{
           display: 'flex',
-          gap: 0.5,
-          ml: { xs: 7, sm: 'auto' },
-          mt: { xs: 0.5, sm: 0 },
-          flexWrap: 'wrap',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          width: '100%',
         }}
       >
-        <Tooltip title="View workouts">
-          <IconButton
-            onClick={() => navigate(`/friends/${friendUid}/workouts`)}
-            id={`view-workouts-${friendUid}`}
-          >
-            <FitnessCenterIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="View templates">
-          <IconButton
-            onClick={() => navigate(`/friends/${friendUid}/templates`)}
-            id={`view-templates-${friendUid}`}
-          >
-            <ConstructionIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="View scripts">
-          <IconButton
-            onClick={() => navigate(`/friends/${friendUid}/scripts`)}
-            id={`view-scripts-${friendUid}`}
-          >
-            <TerminalIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="View records">
-          <IconButton
-            onClick={() => navigate(`/friends/${friendUid}/records`)}
-            id={`view-records-${friendUid}`}
-          >
-            <QueryStatsIcon />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Remove friend">
-          <span>
+        <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: 'auto' } }}>
+          <ListItemAvatar>
+            <Avatar src={profile?.photoURL ?? undefined} alt={displayName}>
+              {displayName[0]?.toUpperCase()}
+            </Avatar>
+          </ListItemAvatar>
+          <ListItemText primary={displayName} />
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 0.5,
+            ml: { xs: 7, sm: 'auto' },
+            mt: { xs: 0.5, sm: 0 },
+            flexWrap: 'wrap',
+          }}
+        >
+          <Tooltip title="View workouts">
             <IconButton
-              color="error"
-              onClick={() => setIsConfirmOpen(true)}
-              disabled={removeMutation.isPending}
-              id={`remove-friend-${friendUid}`}
+              onClick={() => navigate(`/friends/${friendUid}/workouts`)}
+              id={`view-workouts-${friendUid}`}
             >
-              <PersonRemoveIcon />
+              <FitnessCenterIcon />
             </IconButton>
-          </span>
-        </Tooltip>
+          </Tooltip>
+          <Tooltip title="View templates">
+            <IconButton
+              onClick={() => navigate(`/friends/${friendUid}/templates`)}
+              id={`view-templates-${friendUid}`}
+            >
+              <ConstructionIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="View scripts">
+            <IconButton
+              onClick={() => navigate(`/friends/${friendUid}/scripts`)}
+              id={`view-scripts-${friendUid}`}
+            >
+              <TerminalIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="View records">
+            <IconButton
+              onClick={() => navigate(`/friends/${friendUid}/records`)}
+              id={`view-records-${friendUid}`}
+            >
+              <QueryStatsIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Remove friend">
+            <span>
+              <IconButton
+                color="error"
+                onClick={() => setIsConfirmOpen(true)}
+                disabled={removeMutation.isPending}
+                id={`remove-friend-${friendUid}`}
+              >
+                <PersonRemoveIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
+      </Box>
+
+      {/* Heatmap below user name */}
+      <Box sx={{ mt: 1, width: '100%' }}>
+        {workoutsLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : (
+          <WorkoutHeatmap workouts={workouts || []} />
+        )}
       </Box>
 
       <Dialog
@@ -352,7 +380,7 @@ const FriendsPage = () => {
   if (!currentUser) return null;
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h5" gutterBottom>
         Friends
       </Typography>

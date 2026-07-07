@@ -9,12 +9,13 @@ interface WorkoutHeatmapProps {
 
 const WorkoutHeatmap: React.FC<WorkoutHeatmapProps> = ({ workouts }) => {
   const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const cellSize = isMobile ? 5 : isTablet ? 8 : 12;
-  const cellGap = isMobile ? 1 : isTablet ? 1.5 : 2;
-  const labelWidth = isMobile ? 18 : isTablet ? 24 : 32;
+  const cellSize = isXs ? 4 : isMobile ? 4 : isTablet ? 8 : 12;
+  const cellGap = isXs ? 1 : isMobile ? 1 : isTablet ? 1.5 : 2;
+  const labelWidth = isXs ? 14 : isMobile ? 16 : isTablet ? 24 : 32;
 
   const data = useMemo(() => {
     const today = dayjs().startOf('day');
