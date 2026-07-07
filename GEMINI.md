@@ -33,6 +33,7 @@ The project follows a standard React application structure:
         *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs) including real-time details (`getPRDetailsForWorkout`), analyzing exercise metrics, generating E1RM suggestions, converting workout data to text, getting exercise history, calculating total workout weight (`calculateTotalWorkoutWeight`), matching weight to progressive ascii/emoji objects (`getWorkoutWeightObject`), and converting workouts to templates with calculated 1RM percentages (`workoutToTemplate`).
     *   `components/`: Contains reusable React components.
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
+        *   `CalculatorPage.tsx`: A component containing lifting calculators, including an E1RM breaker finder and a 1RM percentage estimator.
         *   `LoginPage.tsx`: Handles user authentication.
         *   `WorkoutPage.tsx`: Core component for creating and editing workouts. Supports drag-and-drop re-ordering of exercises and sets, and creating templates of saved workouts with computed 1RM percentages.
         *   `WorkoutListPage.tsx`: A component for listing workouts.

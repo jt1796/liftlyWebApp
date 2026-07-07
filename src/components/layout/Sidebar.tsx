@@ -9,7 +9,7 @@ import {
   FormControlLabel,
   Box,
 } from '@mui/material';
-import { Logout, FitnessCenter, ListAlt, QueryStats, Create, Brightness4, Brightness7, Construction, Terminal, PeopleAlt } from '@mui/icons-material';
+import { Logout, FitnessCenter, ListAlt, QueryStats, Create, Brightness4, Brightness7, Construction, Terminal, PeopleAlt, Calculate } from '@mui/icons-material';
 import { useAuth } from '../../contexts/auth-context-utils';
 import { useApp } from '../../contexts/app-context-utils';
 import { Link } from 'react-router-dom';
@@ -67,6 +67,14 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
             <QueryStats />
           </ListItemIcon>
           <ListItemText primary="Records" sx={{ marginRight: 5 }} />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton component={Link} to="/calculators" onClick={handleDrawerToggle}>
+          <ListItemIcon>
+            <Calculate />
+          </ListItemIcon>
+          <ListItemText primary="Calculators" sx={{ marginRight: 5 }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>

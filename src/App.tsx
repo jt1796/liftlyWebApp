@@ -9,6 +9,7 @@ import RecordsPage from './components/RecordsPage';
 import ExercisesPage from './components/ExercisesPage';
 import TemplatesPage from './components/TemplatesPage';
 import ScriptsPage from './components/ScriptsPage';
+import CalculatorPage from './components/CalculatorPage';
 import ErrorPage from './components/ErrorPage';
 import Dashboard from './components/Dashboard';
 import FriendsPage from './components/FriendsPage';
@@ -47,6 +48,7 @@ function App() {
             <Route path="/exercises" element={<ExercisesPage />} />
             <Route path="/templates" element={<TemplatesPage />} />
             <Route path="/scripts" element={<ScriptsPage />} />
+            <Route path="/calculators" element={<CalculatorPage />} />
             <Route path="/friends" element={<FriendsPage />} />
             <Route path="/friends/:friendUid/workouts" element={<FriendWorkoutsPage />} />
             <Route path="/friends/:friendUid/records" element={<FriendRecordsPage />} />
