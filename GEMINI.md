@@ -24,7 +24,8 @@ The application will have access to the users workout history, and can use this 
 
 The project follows a standard React application structure:
 
-*   `public/`: Contains static assets like `index.html` and icons.
+*   `public/`: Contains static assets like `index.html`, icons, and PWA configurations.
+    *   `sw.js`: Service Worker for handling background/offline notification scheduling for the rest timer.
     *   `src/`: Contains the main application source code.
     *   `types.ts`: Defines TypeScript interfaces for data structures like `Set`, `Exercise`, `Workout`, `CustomExercise`, `Template`, and `Script`.
     *   `utils/`: Contains utility functions.
@@ -41,6 +42,7 @@ The project follows a standard React application structure:
         *   `TemplatesPage.tsx`: A component for creating and managing workout templates.
         *   `ScriptsPage.tsx`: A component for creating and managing user-defined JavaScript snippets. Supports script execution to generate new workouts. Features an enhanced debug mode that generates 25 sequential workouts, passing state between them, and displays the results in a summary table.
         *   `ProtectedLayout.tsx`: A component that guards routes that require authentication.
+        *   `FloatingStopwatch.tsx`: Global floating stopwatch/rest timer. Counts down rest intervals, manages screen wake lock, plays audio chime alerts, and schedules local notifications through the Service Worker.
         *   `ExerciseHistoryDialog.tsx`: A component for showing the history of a given exercise.
         *   `FriendsPage.tsx`: Manage friends — displays the user's shareable invite code (based on UID), a friend-code lookup/add flow, and a tabbed list of accepted friends and pending requests. Friends can navigate to each other's workouts and records.
         *   `FriendWorkoutsPage.tsx`: Read-only view of a friend's workout history. Accessed at `/friends/:friendUid/workouts`.

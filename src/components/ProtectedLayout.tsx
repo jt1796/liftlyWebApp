@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Box, CssBaseline, Toolbar } from '@mui/material';
 import Sidebar from './layout/Sidebar';
 import Header from './layout/Header';
+import FloatingStopwatch from './FloatingStopwatch';
 
 const ProtectedLayout = () => {
   const { currentUser } = useAuth();
@@ -36,6 +37,7 @@ const ProtectedLayout = () => {
         <Toolbar sx={{ display: {sm: 'none'} }}/>
         <Outlet />
       </Box>
+      <FloatingStopwatch />
     </Box>
   );
 };
