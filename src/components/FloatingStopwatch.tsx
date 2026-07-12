@@ -15,8 +15,6 @@ import {
   useTheme,
   Dialog,
   DialogTitle,
-  DialogContent,
-  DialogContentText,
   DialogActions,
 } from '@mui/material';
 import {
@@ -34,6 +32,30 @@ import {
   NotificationsActive,
 } from '@mui/icons-material';
 import { useApp } from '../contexts/app-context-utils';
+// Safe localStorage wrappers to prevent crashing in restricted PWA/Webview environments
+const safeGetItem = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeSetItem = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore error
+  }
+};
+
+const safeRemoveItem = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore error
+  }
+};
 
 // Impure functions must be declared outside the React component scope to satisfy purity lint rules
 const getSystemTime = (): number => {
@@ -44,18 +66,28 @@ const FloatingStopwatch = () => {
   const theme = useTheme();
   const { darkMode } = useApp();
 
+  // Delay rendering entirely on mount so the position:fixed FAB reliably appears
+  // on PWA cold-start. Some mobile browsers fail to composite fixed elements that
+  // exist from the initial paint — by deferring the first render of this subtree,
+  // we guarantee the browser does a full layout pass when the element is inserted.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const wakeLockRef = useRef<{ release(): Promise<void> } | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
   // Lazy Initializers to avoid calling setState synchronously on mount
   const [totalDuration, setTotalDuration] = useState<number>(() => {
-    const saved = localStorage.getItem('liftly_timer_totalDuration');
+    const saved = safeGetItem('liftly_timer_totalDuration');
     return saved ? parseInt(saved, 10) : 180;
   });
 
   const [endTime, setEndTime] = useState<number | null>(() => {
-    const savedEndTimeStr = localStorage.getItem('liftly_timer_endTime');
-    const savedIsRunningStr = localStorage.getItem('liftly_timer_isRunning');
+    const savedEndTimeStr = safeGetItem('liftly_timer_endTime');
+    const savedIsRunningStr = safeGetItem('liftly_timer_isRunning');
     if (savedIsRunningStr === 'true' && savedEndTimeStr) {
       const savedEndTime = parseInt(savedEndTimeStr, 10);
       if (getSystemTime() < savedEndTime) {
@@ -66,8 +98,8 @@ const FloatingStopwatch = () => {
   });
 
   const [isRunning, setIsRunning] = useState<boolean>(() => {
-    const savedEndTimeStr = localStorage.getItem('liftly_timer_endTime');
-    const savedIsRunningStr = localStorage.getItem('liftly_timer_isRunning');
+    const savedEndTimeStr = safeGetItem('liftly_timer_endTime');
+    const savedIsRunningStr = safeGetItem('liftly_timer_isRunning');
     if (savedIsRunningStr === 'true' && savedEndTimeStr) {
       const savedEndTime = parseInt(savedEndTimeStr, 10);
       if (getSystemTime() < savedEndTime) {
@@ -78,10 +110,10 @@ const FloatingStopwatch = () => {
   });
 
   const [remainingTime, setRemainingTime] = useState<number>(() => {
-    const savedEndTimeStr = localStorage.getItem('liftly_timer_endTime');
-    const savedIsRunningStr = localStorage.getItem('liftly_timer_isRunning');
-    const savedRemainingStr = localStorage.getItem('liftly_timer_remainingTime');
-    const savedDurationStr = localStorage.getItem('liftly_timer_totalDuration');
+    const savedEndTimeStr = safeGetItem('liftly_timer_endTime');
+    const savedIsRunningStr = safeGetItem('liftly_timer_isRunning');
+    const savedRemainingStr = safeGetItem('liftly_timer_remainingTime');
+    const savedDurationStr = safeGetItem('liftly_timer_totalDuration');
     const totalDur = savedDurationStr ? parseInt(savedDurationStr, 10) : 180;
 
     if (savedIsRunningStr === 'true' && savedEndTimeStr) {
@@ -97,20 +129,24 @@ const FloatingStopwatch = () => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
-    const saved = localStorage.getItem('liftly_timer_soundEnabled');
+    const saved = safeGetItem('liftly_timer_soundEnabled');
     return saved !== 'false';
   });
 
   const [wakeLockEnabled, setWakeLockEnabled] = useState<boolean>(() => {
-    const saved = localStorage.getItem('liftly_timer_wakeLockEnabled');
+    const saved = safeGetItem('liftly_timer_wakeLockEnabled');
     return saved !== 'false';
   });
 
   const [alertOpen, setAlertOpen] = useState<boolean>(false);
 
-  const [notificationPermission, setNotificationPermission] = useState<string>(
-    'Notification' in window ? Notification.permission : 'default'
-  );
+  const [notificationPermission, setNotificationPermission] = useState<string>(() => {
+    try {
+      return 'Notification' in window ? Notification.permission : 'default';
+    } catch {
+      return 'default';
+    }
+  });
 
   const longPressTimerRef = useRef<number | null>(null);
   const isLongPressRef = useRef<boolean>(false);
@@ -207,7 +243,7 @@ const FloatingStopwatch = () => {
   };
 
   // Post messages to the registered Service Worker
-  const postToSW = (msg: { action: string; title?: string; body?: string; delay?: number }) => {
+  const postToSW = useCallback((msg: { action: string; title?: string; body?: string; delay?: number; endTime?: number; totalDuration?: number }) => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((registration) => {
         if (registration.active) {
@@ -215,24 +251,20 @@ const FloatingStopwatch = () => {
         }
       });
     }
-  };
-
-  const scheduleSWNotification = useCallback((seconds: number) => {
-    if (notificationPermission === 'granted') {
-      postToSW({
-        action: 'scheduleNotification',
-        title: 'Rest Over!',
-        body: 'Time for your next set. Let\'s lift!',
-        delay: seconds * 1000,
-      });
-    }
-  }, [notificationPermission]);
+  }, []);
 
   const cancelSWNotification = useCallback(() => {
     postToSW({
       action: 'cancelNotification',
     });
-  }, []);
+  }, [postToSW]);
+
+  // Cancel only the countdown progress notification, leaving the completion notification intact
+  const cancelSWCountdown = useCallback(() => {
+    postToSW({
+      action: 'cancelCountdown',
+    });
+  }, [postToSW]);
 
   // Request notifications permission
   const requestNotificationPermission = async () => {
@@ -248,24 +280,26 @@ const FloatingStopwatch = () => {
     setEndTime(null);
     setRemainingTime(totalDuration);
 
-    localStorage.removeItem('liftly_timer_endTime');
-    localStorage.setItem('liftly_timer_isRunning', 'false');
-    localStorage.setItem('liftly_timer_remainingTime', totalDuration.toString());
+    safeRemoveItem('liftly_timer_endTime');
+    safeSetItem('liftly_timer_isRunning', 'false');
+    safeSetItem('liftly_timer_remainingTime', totalDuration.toString());
 
     playChime();
     setAlertOpen(true);
     releaseWakeLock();
-    cancelSWNotification();
-  }, [totalDuration, playChime, cancelSWNotification]);
+    // Only cancel the countdown progress — the SW will show/has shown
+    // the completion notification on its own with tag 'rest-timer-complete'
+    cancelSWCountdown();
+  }, [totalDuration, playChime, cancelSWCountdown]);
 
   // Synchronize timer with stored configuration and system clock (handles background resumption)
   const syncTimer = useCallback(() => {
-    const savedEndTimeStr = localStorage.getItem('liftly_timer_endTime');
-    const savedIsRunningStr = localStorage.getItem('liftly_timer_isRunning');
-    const savedRemainingStr = localStorage.getItem('liftly_timer_remainingTime');
-    const savedDurationStr = localStorage.getItem('liftly_timer_totalDuration');
-    const savedSoundStr = localStorage.getItem('liftly_timer_soundEnabled');
-    const savedWakeStr = localStorage.getItem('liftly_timer_wakeLockEnabled');
+    const savedEndTimeStr = safeGetItem('liftly_timer_endTime');
+    const savedIsRunningStr = safeGetItem('liftly_timer_isRunning');
+    const savedRemainingStr = safeGetItem('liftly_timer_remainingTime');
+    const savedDurationStr = safeGetItem('liftly_timer_totalDuration');
+    const savedSoundStr = safeGetItem('liftly_timer_soundEnabled');
+    const savedWakeStr = safeGetItem('liftly_timer_wakeLockEnabled');
 
     if (savedSoundStr !== null) setSoundEnabled(savedSoundStr === 'true');
     if (savedWakeStr !== null) setWakeLockEnabled(savedWakeStr === 'true');
@@ -284,9 +318,9 @@ const FloatingStopwatch = () => {
         const dur = savedDurationStr ? parseInt(savedDurationStr, 10) : 180;
         setRemainingTime(dur);
 
-        localStorage.removeItem('liftly_timer_endTime');
-        localStorage.setItem('liftly_timer_isRunning', 'false');
-        localStorage.setItem('liftly_timer_remainingTime', dur.toString());
+        safeRemoveItem('liftly_timer_endTime');
+        safeSetItem('liftly_timer_isRunning', 'false');
+        safeSetItem('liftly_timer_remainingTime', dur.toString());
 
         playChime();
         setAlertOpen(true);
@@ -323,20 +357,25 @@ const FloatingStopwatch = () => {
     setEndTime(newEndTime);
     setIsRunning(true);
 
-    localStorage.setItem('liftly_timer_endTime', newEndTime.toString());
-    localStorage.setItem('liftly_timer_isRunning', 'true');
-    localStorage.removeItem('liftly_timer_remainingTime');
+    safeSetItem('liftly_timer_endTime', newEndTime.toString());
+    safeSetItem('liftly_timer_isRunning', 'true');
+    safeRemoveItem('liftly_timer_remainingTime');
 
-    scheduleSWNotification(remainingTime);
-  }, [remainingTime, scheduleSWNotification, playTick]);
+    // Auto-request notification permission on first timer start
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then((permission) => {
+        setNotificationPermission(permission);
+      });
+    }
+  }, [remainingTime, playTick]);
 
   const handlePause = useCallback(() => {
     playTick();
     setIsRunning(false);
     setEndTime(null);
 
-    localStorage.setItem('liftly_timer_isRunning', 'false');
-    localStorage.setItem('liftly_timer_remainingTime', remainingTime.toString());
+    safeSetItem('liftly_timer_isRunning', 'false');
+    safeSetItem('liftly_timer_remainingTime', remainingTime.toString());
 
     cancelSWNotification();
   }, [remainingTime, cancelSWNotification, playTick]);
@@ -421,8 +460,8 @@ const FloatingStopwatch = () => {
     setEndTime(null);
     setRemainingTime(totalDuration);
 
-    localStorage.setItem('liftly_timer_isRunning', 'false');
-    localStorage.setItem('liftly_timer_remainingTime', totalDuration.toString());
+    safeSetItem('liftly_timer_isRunning', 'false');
+    safeSetItem('liftly_timer_remainingTime', totalDuration.toString());
 
     cancelSWNotification();
   };
@@ -432,17 +471,15 @@ const FloatingStopwatch = () => {
     setTotalDuration(seconds);
     setRemainingTime(seconds);
 
-    localStorage.setItem('liftly_timer_totalDuration', seconds.toString());
+    safeSetItem('liftly_timer_totalDuration', seconds.toString());
 
     const newEndTime = getSystemTime() + seconds * 1000;
     setEndTime(newEndTime);
     setIsRunning(true);
 
-    localStorage.setItem('liftly_timer_endTime', newEndTime.toString());
-    localStorage.setItem('liftly_timer_isRunning', 'true');
-    localStorage.removeItem('liftly_timer_remainingTime');
-
-    scheduleSWNotification(seconds);
+    safeSetItem('liftly_timer_endTime', newEndTime.toString());
+    safeSetItem('liftly_timer_isRunning', 'true');
+    safeRemoveItem('liftly_timer_remainingTime');
   };
 
   const handleAdd30s = () => {
@@ -453,10 +490,9 @@ const FloatingStopwatch = () => {
     if (isRunning && endTime !== null) {
       const newEndTime = endTime + 30 * 1000;
       setEndTime(newEndTime);
-      localStorage.setItem('liftly_timer_endTime', newEndTime.toString());
-      scheduleSWNotification(newRemaining);
+      safeSetItem('liftly_timer_endTime', newEndTime.toString());
     } else {
-      localStorage.setItem('liftly_timer_remainingTime', newRemaining.toString());
+      safeSetItem('liftly_timer_remainingTime', newRemaining.toString());
     }
   };
 
@@ -464,39 +500,22 @@ const FloatingStopwatch = () => {
     playTick();
     const nextVal = !soundEnabled;
     setSoundEnabled(nextVal);
-    localStorage.setItem('liftly_timer_soundEnabled', nextVal.toString());
+    safeSetItem('liftly_timer_soundEnabled', nextVal.toString());
   };
 
   const toggleWakeLock = () => {
     playTick();
     const nextVal = !wakeLockEnabled;
     setWakeLockEnabled(nextVal);
-    localStorage.setItem('liftly_timer_wakeLockEnabled', nextVal.toString());
+    safeSetItem('liftly_timer_wakeLockEnabled', nextVal.toString());
   };
 
   // Sync on mount
   useEffect(() => {
-    // Check if it expired while we were away
-    const savedEndTimeStr = localStorage.getItem('liftly_timer_endTime');
-    const savedIsRunningStr = localStorage.getItem('liftly_timer_isRunning');
-
-    if (savedIsRunningStr === 'true' && savedEndTimeStr) {
-      const savedEndTime = parseInt(savedEndTimeStr, 10);
-      const now = getSystemTime();
-
-      if (now >= savedEndTime) {
-        setTimeout(() => {
-          setAlertOpen(true);
-          playChime();
-        }, 0);
-
-        const savedDurationStr = localStorage.getItem('liftly_timer_totalDuration');
-        const dur = savedDurationStr ? parseInt(savedDurationStr, 10) : 180;
-        localStorage.removeItem('liftly_timer_endTime');
-        localStorage.setItem('liftly_timer_isRunning', 'false');
-        localStorage.setItem('liftly_timer_remainingTime', dur.toString());
-      }
-    }
+    // Run syncTimer asynchronously on mount to satisfy pure components/cascading render rules
+    const mountTimeout = setTimeout(() => {
+      syncTimer();
+    }, 0);
 
     // Check for Wake Lock re-acquisition on visibility changes
     const handleVisibilityChange = () => {
@@ -507,10 +526,11 @@ const FloatingStopwatch = () => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      clearTimeout(mountTimeout);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       releaseWakeLock();
     };
-  }, [syncTimer, playChime]);
+  }, [syncTimer]);
 
   // Sync Wake Lock when running state or preference changes
   useEffect(() => {
@@ -520,6 +540,21 @@ const FloatingStopwatch = () => {
       releaseWakeLock();
     }
   }, [isRunning, wakeLockEnabled, requestWakeLock]);
+
+  // Sync Service Worker countdown notification when running state, end time, or duration changes
+  useEffect(() => {
+    if (isRunning && endTime !== null) {
+      if (notificationPermission === 'granted') {
+        postToSW({
+          action: 'startCountdown',
+          endTime: endTime,
+          totalDuration: totalDuration,
+        });
+      }
+    } else {
+      cancelSWNotification();
+    }
+  }, [isRunning, endTime, totalDuration, notificationPermission, postToSW, cancelSWNotification]);
 
   // Clock countdown interval
   useEffect(() => {
@@ -557,6 +592,8 @@ const FloatingStopwatch = () => {
   };
 
   const percentRemaining = totalDuration > 0 ? (remainingTime / totalDuration) * 100 : 0;
+
+  if (!mounted) return null;
 
   return (
     <>
@@ -843,14 +880,9 @@ const FloatingStopwatch = () => {
         <DialogTitle id="rest-timer-dialog-title" sx={{ fontWeight: 'bold' }}>
           ⏱️ Rest Period Complete!
         </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="rest-timer-dialog-description">
-            Your rest timer has completed. Time to start your next lifting set!
-          </DialogContentText>
-        </DialogContent>
         <DialogActions>
           <Button onClick={() => { playTick(); setAlertOpen(false); }} color="primary" variant="contained" autoFocus>
-            Let's Lift
+            Close
           </Button>
         </DialogActions>
       </Dialog>

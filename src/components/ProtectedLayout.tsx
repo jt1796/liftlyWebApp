@@ -20,25 +20,27 @@ const ProtectedLayout = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'row' }}>
-      <CssBaseline />
-      <Header handleDrawerToggle={handleDrawerToggle} />
-      <Sidebar
-        mobileOpen={mobileOpen}
-        handleDrawerToggle={handleDrawerToggle}
-      />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          overflow: 'auto',
-        }}
-      >
-        <Toolbar sx={{ display: {sm: 'none'} }}/>
-        <Outlet />
+    <>
+      <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'row' }}>
+        <CssBaseline />
+        <Header handleDrawerToggle={handleDrawerToggle} />
+        <Sidebar
+          mobileOpen={mobileOpen}
+          handleDrawerToggle={handleDrawerToggle}
+        />
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            overflow: 'auto',
+          }}
+        >
+          <Toolbar sx={{ display: {sm: 'none'} }}/>
+          <Outlet />
+        </Box>
       </Box>
       <FloatingStopwatch />
-    </Box>
+    </>
   );
 };
 
