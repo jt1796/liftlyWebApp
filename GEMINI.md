@@ -46,7 +46,7 @@ The project follows a standard React application structure:
         *   `FloatingStopwatch.tsx`: **Deprecated/unused.** Timer functionality has been moved into `useRestTimer` hook and layout components.
     *   `components/layout/`: Layout shell components.
         *   `Header.tsx`: Mobile-only AppBar with hamburger menu and rest timer button. Timer countdown is shown inline; tapping opens the full timer panel as a Popover.
-        *   `Sidebar.tsx`: Navigation drawer (temporary on mobile, permanent on desktop). Contains the rest timer as a list item on desktop.
+        *   `Sidebar.tsx`: Navigation drawer (temporary on mobile, permanent on desktop). Contains the rest timer as a list item on desktop. Also contains the color theme picker (Palette button → Menu with grouped dark/light themes).
         *   `RestTimer.tsx`: Orchestrator component that owns the `useRestTimer` hook and exposes `AppBarTimerButton` (for mobile AppBar) and `SidebarTimerButton` (for desktop Sidebar). Also renders the timer completion dialog.
         *   `RestTimerPanel.tsx`: The expanded rest timer panel UI (presets, playback controls, settings). Rendered inside a Popover anchored to the timer button.
     *   `hooks/`: Custom React hooks.
@@ -60,11 +60,12 @@ The project follows a standard React application structure:
     *   `contexts/`: Contains React contexts for managing application-wide state.
         *   `AuthContext.tsx`: Provides an `AuthProvider` component to manage user authentication state using Firebase. It makes the current user, loading status, and logout function available to its children.
         *   `auth-context-utils.ts`: Defines the `AuthContext` and a `useAuth` hook for components to easily access authentication state.
-        *   `AppProvider.tsx`: Provides an `AppProvider` component that manages application-level settings, such as the light/dark mode theme, using local storage for persistence.
-        *   `app-context-utils.ts`: Defines the `AppContext` and a `useApp` hook for components to access application-level settings.
+        *   `AppProvider.tsx`: Provides an `AppProvider` component that manages application-level settings, including the active color theme (`colorTheme` ID), using local storage for persistence. Migrates from the legacy `darkmode` localStorage key automatically.
+        *   `app-context-utils.ts`: Defines the `AppContext` and a `useApp` hook for components to access application-level settings. Exposes `darkMode` (derived base mode), `colorTheme` (active theme ID), `setColorTheme`, and legacy `setDarkMode`.
     *   `data/`: Contains static data, such as the list of exercises.
     *   `firebase.ts`: Initializes and configures the Firebase SDK.
-    *   `App.tsx`: The main application component that sets up routing.
+    *   `themes.ts`: Defines `ColorThemeDefinition` interface and `COLOR_THEMES` array with 13 color themes (7 dark, 6 light). Each theme specifies an ID, label, emoji icon, base mode, and MUI `ThemeOptions`. Also exports `getThemeById()` helper.
+    *   `App.tsx`: The main application component that sets up routing. Uses `getThemeById(colorTheme).themeOptions` to create the MUI theme.
     *   `main.tsx`: The entry point of the application.
 
 ## General Guidance

@@ -7,16 +7,18 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Switch,
-  FormControlLabel,
   Box,
+  Menu,
+  MenuItem,
+  Typography,
 } from '@mui/material';
-import { Logout, FitnessCenter, ListAlt, QueryStats, Create, Brightness4, Brightness7, Construction, Terminal, PeopleAlt, Calculate } from '@mui/icons-material';
+import { Logout, FitnessCenter, ListAlt, QueryStats, Create, Palette, Construction, Terminal, PeopleAlt, Calculate, Check } from '@mui/icons-material';
 import { useAuth } from '../../contexts/auth-context-utils';
 import { useApp } from '../../contexts/app-context-utils';
 import { Link } from 'react-router-dom';
 import { SidebarTimerButton } from './RestTimer';
 import type { useRestTimer } from '../../hooks/useRestTimer';
+import { COLOR_THEMES } from '../../themes';
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -26,12 +28,12 @@ interface SidebarProps {
 
 const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
   const { logout } = useAuth();
-  const { darkMode, setDarkMode } = useApp();
+  const { colorTheme, setColorTheme } = useApp();
   const [timerAnchorEl, setTimerAnchorEl] = useState<HTMLElement | null>(null);
+  const [themeMenuAnchorEl, setThemeMenuAnchorEl] = useState<HTMLElement | null>(null);
 
-  const handleThemeChange = () => {
-    setDarkMode(darkMode === 'dark' ? 'light' : 'dark');
-  };
+  const darkThemes = COLOR_THEMES.filter((t) => t.baseMode === 'dark');
+  const lightThemes = COLOR_THEMES.filter((t) => t.baseMode === 'light');
 
   const drawerContent = (
     <List>
@@ -116,19 +118,72 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
-        <FormControlLabel
-          control={<Switch checked={darkMode === 'dark'} onChange={handleThemeChange} />}
-          label={
-            <Box display="flex" alignItems="center">
-              <ListItemIcon sx={{ minWidth: 'auto', mr: 1 }}>
-                {darkMode === 'light' ? <Brightness7 /> : <Brightness4 />}
-              </ListItemIcon>
-              <ListItemText primary={darkMode === 'light' ? 'Light Mode' : 'Dark Mode'} />
-            </Box>
-          }
-          sx={{ ml: 1 }}
-        />
+        <ListItemButton onClick={(e) => setThemeMenuAnchorEl(e.currentTarget)}>
+          <ListItemIcon>
+            <Palette />
+          </ListItemIcon>
+          <ListItemText
+            primary="Theme"
+            secondary={COLOR_THEMES.find((t) => t.id === colorTheme)?.label}
+            sx={{ marginRight: 5 }}
+          />
+        </ListItemButton>
       </ListItem>
+
+      {/* Theme picker menu */}
+      <Menu
+        anchorEl={themeMenuAnchorEl}
+        open={Boolean(themeMenuAnchorEl)}
+        onClose={() => setThemeMenuAnchorEl(null)}
+        slotProps={{
+          paper: {
+            sx: {
+              maxHeight: 420,
+              minWidth: 200,
+            },
+          },
+        }}
+      >
+        <Typography variant="overline" sx={{ px: 2, pt: 1, display: 'block', color: 'text.secondary' }}>
+          Dark Themes
+        </Typography>
+        {darkThemes.map((t) => (
+          <MenuItem
+            key={t.id}
+            selected={t.id === colorTheme}
+            onClick={() => {
+              setColorTheme(t.id);
+              setThemeMenuAnchorEl(null);
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={1.5} width="100%">
+              <Typography fontSize="1.2rem">{t.icon}</Typography>
+              <Typography variant="body2" sx={{ flex: 1 }}>{t.label}</Typography>
+              {t.id === colorTheme && <Check fontSize="small" color="primary" />}
+            </Box>
+          </MenuItem>
+        ))}
+        <Divider sx={{ my: 0.5 }} />
+        <Typography variant="overline" sx={{ px: 2, pt: 1, display: 'block', color: 'text.secondary' }}>
+          Light Themes
+        </Typography>
+        {lightThemes.map((t) => (
+          <MenuItem
+            key={t.id}
+            selected={t.id === colorTheme}
+            onClick={() => {
+              setColorTheme(t.id);
+              setThemeMenuAnchorEl(null);
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={1.5} width="100%">
+              <Typography fontSize="1.2rem">{t.icon}</Typography>
+              <Typography variant="body2" sx={{ flex: 1 }}>{t.label}</Typography>
+              {t.id === colorTheme && <Check fontSize="small" color="primary" />}
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
     </List>
   );
 
@@ -162,3 +217,4 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
 };
 
 export default Sidebar;
+

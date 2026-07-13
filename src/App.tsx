@@ -22,15 +22,13 @@ import {
   ThemeProvider,
   CssBaseline,
 } from '@mui/material';
+import { getThemeById } from './themes';
 
 function App() {
-  const { darkMode } = useApp(); // Use darkMode from context
+  const { colorTheme } = useApp();
 
-  const theme = createTheme({
-    palette: {
-      mode: darkMode, // Set theme mode dynamically
-    },
-  });
+  const theme = createTheme(getThemeById(colorTheme).themeOptions);
+
 
   return (
     <ThemeProvider theme={theme}>
