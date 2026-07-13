@@ -302,7 +302,7 @@ export const useRestTimer = (): RestTimerState & RestTimerActions => {
         playChime();
         setAlertOpen(true);
         releaseWakeLock();
-        cancelSWNotification();
+        cancelSWCountdown();
       } else {
         // Still counting down
         setEndTime(savedEndTime);
@@ -325,7 +325,7 @@ export const useRestTimer = (): RestTimerState & RestTimerActions => {
       }
       releaseWakeLock();
     }
-  }, [playChime, cancelSWNotification, requestWakeLock]);
+  }, [playChime, cancelSWCountdown, requestWakeLock]);
 
   // Controller Actions
   const handleStart = useCallback(() => {
@@ -463,9 +463,10 @@ export const useRestTimer = (): RestTimerState & RestTimerActions => {
         });
       }
     } else {
-      cancelSWNotification();
+      // Only cancel the progress countdown — preserve any completion notification
+      cancelSWCountdown();
     }
-  }, [isRunning, endTime, totalDuration, notificationPermission, postToSW, cancelSWNotification]);
+  }, [isRunning, endTime, totalDuration, notificationPermission, postToSW, cancelSWCountdown]);
 
   // Clock countdown interval
   useEffect(() => {

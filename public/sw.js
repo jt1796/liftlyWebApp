@@ -8,9 +8,7 @@ self.addEventListener('activate', (event) => {
 });
 
 let timeoutId = null;
-let countdownIntervalId = null;
 let targetEndTime = null;
-let targetTotalDuration = null;
 let activeCountdownResolver = null;
 
 self.addEventListener('message', (event) => {
@@ -18,49 +16,44 @@ self.addEventListener('message', (event) => {
   if (!data) return;
 
   if (data.action === 'startCountdown') {
-    const { endTime, totalDuration } = data;
-    targetEndTime = endTime;
-    targetTotalDuration = totalDuration;
+    targetEndTime = data.endTime;
 
     if (timeoutId) {
       clearTimeout(timeoutId);
       timeoutId = null;
     }
-    if (countdownIntervalId) {
-      clearInterval(countdownIntervalId);
-      countdownIntervalId = null;
-    }
+
     if (activeCountdownResolver) {
       activeCountdownResolver();
       activeCountdownResolver = null;
     }
 
+    const now = Date.now();
+    const remaining = Math.max(0, Math.ceil((targetEndTime - now) / 1000));
+
+    if (remaining <= 0) {
+      // Already expired — show completion immediately
+      const p = showNotification('Rest Over!', "Time for your next set. ", true, 'rest-timer-complete');
+      if (p) event.waitUntil(p);
+      return;
+    }
+
+    // Show a single static notification — no per-second updates
+    showNotification('Resting...', `${formatTime(remaining)} timer active`, false, 'rest-timer');
+
+    // Schedule a timeout to fire the completion notification when the timer ends
     const promise = new Promise((resolve) => {
       activeCountdownResolver = resolve;
+      const delay = targetEndTime - now;
 
-      const updateCountdown = () => {
-        const now = Date.now();
-        const remaining = Math.max(0, Math.ceil((targetEndTime - now) / 1000));
-
-        if (remaining <= 0) {
-          if (countdownIntervalId) {
-            clearInterval(countdownIntervalId);
-            countdownIntervalId = null;
-          }
-          // Close the progress notification before showing the completion one
-          self.registration.getNotifications({ tag: 'rest-timer' }).then((ns) => ns.forEach((n) => n.close()));
-          showNotification('Rest Over!', "Time for your next set. Let's lift!", true, 'rest-timer-complete');
-          resolve();
-          activeCountdownResolver = null;
-        } else {
-          const bar = getProgressBar(remaining, targetTotalDuration);
-          const bodyText = bar ? `${formatTime(remaining)} remaining  [${bar}]` : `${formatTime(remaining)} remaining`;
-          showNotification('Resting...', bodyText, false, 'rest-timer');
-        }
-      };
-
-      updateCountdown();
-      countdownIntervalId = setInterval(updateCountdown, 1000);
+      timeoutId = setTimeout(() => {
+        timeoutId = null;
+        // Close the static progress notification before showing completion
+        self.registration.getNotifications({ tag: 'rest-timer' }).then((ns) => ns.forEach((n) => n.close()));
+        showNotification('Rest Over!', "Time for your next set. ", true, 'rest-timer-complete');
+        resolve();
+        activeCountdownResolver = null;
+      }, delay);
     });
 
     event.waitUntil(promise);
@@ -71,10 +64,7 @@ self.addEventListener('message', (event) => {
       clearTimeout(timeoutId);
       timeoutId = null;
     }
-    if (countdownIntervalId) {
-      clearInterval(countdownIntervalId);
-      countdownIntervalId = null;
-    }
+
     if (activeCountdownResolver) {
       activeCountdownResolver();
       activeCountdownResolver = null;
@@ -100,10 +90,10 @@ self.addEventListener('message', (event) => {
     });
     event.waitUntil(promise);
   } else if (data.action === 'cancelCountdown') {
-    // Cancel only the countdown progress — leave the completion notification alone
-    if (countdownIntervalId) {
-      clearInterval(countdownIntervalId);
-      countdownIntervalId = null;
+    // Cancel the scheduled completion timeout — leave any completion notification alone
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
     }
     if (activeCountdownResolver) {
       activeCountdownResolver();
@@ -119,10 +109,7 @@ self.addEventListener('message', (event) => {
       clearTimeout(timeoutId);
       timeoutId = null;
     }
-    if (countdownIntervalId) {
-      clearInterval(countdownIntervalId);
-      countdownIntervalId = null;
-    }
+
     if (activeCountdownResolver) {
       activeCountdownResolver();
       activeCountdownResolver = null;
@@ -142,13 +129,6 @@ function formatTime(secs) {
   const mins = Math.floor(secs / 60);
   const s = secs % 60;
   return (mins < 10 ? '0' + mins : mins) + ':' + (s < 10 ? '0' + s : s);
-}
-
-function getProgressBar(remaining, total) {
-  if (!total || total <= 0) return '';
-  const percentDone = (total - remaining) / total;
-  const filled = Math.min(10, Math.max(0, Math.round(percentDone * 10)));
-  return '█'.repeat(filled) + '░'.repeat(10 - filled);
 }
 
 function showNotification(title, body, alertUser, tag) {
