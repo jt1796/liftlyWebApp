@@ -64,7 +64,7 @@ The project follows a standard React application structure:
         *   `app-context-utils.ts`: Defines the `AppContext` and a `useApp` hook for components to access application-level settings. Exposes `darkMode` (derived base mode), `colorTheme` (active theme ID), `setColorTheme`, and legacy `setDarkMode`.
     *   `data/`: Contains static data, such as the list of exercises.
     *   `firebase.ts`: Initializes and configures the Firebase SDK.
-    *   `themes.ts`: Defines `ColorThemeDefinition` interface and `COLOR_THEMES` array with 13 color themes (7 dark, 6 light). Each theme specifies an ID, label, emoji icon, base mode, and MUI `ThemeOptions`. Also exports `getThemeById()` helper.
+    *   `themes.ts`: Defines `ColorThemeDefinition` interface and `COLOR_THEMES` array with 17 color themes (9 dark, 8 light). Each theme specifies an ID, label, emoji icon, base mode, and MUI `ThemeOptions`. Also exports `getThemeById()` helper.
     *   `App.tsx`: The main application component that sets up routing. Uses `getThemeById(colorTheme).themeOptions` to create the MUI theme.
     *   `main.tsx`: The entry point of the application.
 

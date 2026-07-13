@@ -111,6 +111,26 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     },
   },
   {
+    id: 'solarized-dark',
+    label: 'Solarized Dark',
+    icon: '🪐',
+    baseMode: 'dark',
+    themeOptions: {
+      palette: {
+        mode: 'dark',
+        primary: { main: '#268bd2' },
+        secondary: { main: '#2aa198' },
+        background: { default: '#002b36', paper: '#073642' },
+        text: {
+          primary: '#93a1a1',
+          secondary: '#839496',
+          disabled: '#586e75',
+        },
+        divider: '#586e75',
+      },
+    },
+  },
+  {
     id: 'hacker-terminal',
     label: 'Hacker Terminal',
     icon: '💻',
@@ -185,6 +205,20 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     },
   },
   {
+    id: 'valentine-pink',
+    label: 'Valentine Pink',
+    icon: '💖',
+    baseMode: 'light',
+    themeOptions: {
+      palette: {
+        mode: 'light',
+        primary: { main: '#e11d48' },
+        secondary: { main: '#db2777' },
+        background: { default: '#fff1f2', paper: '#ffffff' },
+      },
+    },
+  },
+  {
     id: 'mint',
     label: 'Mint',
     icon: '🍃',
@@ -209,6 +243,26 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
         primary: { main: '#b45309' },
         secondary: { main: '#d97706' },
         background: { default: '#fefce8', paper: '#fffbeb' },
+      },
+    },
+  },
+  {
+    id: 'solarized-light',
+    label: 'Solarized Light',
+    icon: '🌅',
+    baseMode: 'light',
+    themeOptions: {
+      palette: {
+        mode: 'light',
+        primary: { main: '#268bd2' },
+        secondary: { main: '#2aa198' },
+        background: { default: '#fdf6e3', paper: '#eee8d5' },
+        text: {
+          primary: '#586e75',
+          secondary: '#657b83',
+          disabled: '#93a1a1',
+        },
+        divider: '#eee8d5',
       },
     },
   },
