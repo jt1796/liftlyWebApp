@@ -41,8 +41,15 @@ The project follows a standard React application structure:
         *   `ExercisesPage.tsx`: A component for managing custom exercises.
         *   `TemplatesPage.tsx`: A component for creating and managing workout templates.
         *   `ScriptsPage.tsx`: A component for creating and managing user-defined JavaScript snippets. Supports script execution to generate new workouts. Features an enhanced debug mode that generates 25 sequential workouts, passing state between them, and displays the results in a summary table.
-        *   `ProtectedLayout.tsx`: A component that guards routes that require authentication.
-        *   `FloatingStopwatch.tsx`: Global floating stopwatch/rest timer. Counts down rest intervals, manages screen wake lock, plays audio chime alerts, and schedules local notifications through the Service Worker.
+        *   `ProtectedLayout.tsx`: A component that guards routes that require authentication. Uses `RestTimerProvider` to share the rest timer state between the `Header` (mobile AppBar) and `Sidebar` (desktop).
+        *   `FloatingStopwatch.tsx`: **Deprecated/unused.** Timer functionality has been moved into `useRestTimer` hook and layout components.
+    *   `components/layout/`: Layout shell components.
+        *   `Header.tsx`: Mobile-only AppBar with hamburger menu and rest timer button. Timer countdown is shown inline; tapping opens the full timer panel as a Popover.
+        *   `Sidebar.tsx`: Navigation drawer (temporary on mobile, permanent on desktop). Contains the rest timer as a list item on desktop.
+        *   `RestTimer.tsx`: Orchestrator component that owns the `useRestTimer` hook and exposes `AppBarTimerButton` (for mobile AppBar) and `SidebarTimerButton` (for desktop Sidebar). Also renders the timer completion dialog.
+        *   `RestTimerPanel.tsx`: The expanded rest timer panel UI (presets, playback controls, settings). Rendered inside a Popover anchored to the timer button.
+    *   `hooks/`: Custom React hooks.
+        *   `useRestTimer.ts`: Encapsulates all rest timer logic — countdown, wake lock, audio chime, Service Worker notifications, presets, localStorage persistence. Shared by AppBar and Sidebar timer buttons.
         *   `ExerciseHistoryDialog.tsx`: A component for showing the history of a given exercise.
         *   `FriendsPage.tsx`: Manage friends — displays the user's shareable invite code (based on UID), a friend-code lookup/add flow, and a tabbed list of accepted friends and pending requests. Friends can navigate to each other's workouts and records.
         *   `FriendWorkoutsPage.tsx`: Read-only view of a friend's workout history. Accessed at `/friends/:friendUid/workouts`.

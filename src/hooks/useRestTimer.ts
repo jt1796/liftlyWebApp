@@ -1,37 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { MouseEvent, TouchEvent } from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  IconButton,
-  Button,
-  Grid,
-  CircularProgress,
-  LinearProgress,
-  Tooltip,
-  Switch,
-  FormControlLabel,
-  useTheme,
-  Dialog,
-  DialogTitle,
-  DialogActions,
-} from '@mui/material';
-import {
-  Timer,
-  PlayArrow,
-  Pause,
-  Replay,
-  KeyboardArrowDown,
-  VolumeUp,
-  VolumeOff,
-  Lightbulb,
-  LightbulbOutlined,
-  Add,
-  Notifications,
-  NotificationsActive,
-} from '@mui/icons-material';
-import { useApp } from '../contexts/app-context-utils';
+
 // Safe localStorage wrappers to prevent crashing in restricted PWA/Webview environments
 const safeGetItem = (key: string): string | null => {
   try {
@@ -62,20 +30,34 @@ const getSystemTime = (): number => {
   return Date.now();
 };
 
-const FloatingStopwatch = () => {
-  const theme = useTheme();
-  const { darkMode } = useApp();
+export interface RestTimerState {
+  totalDuration: number;
+  remainingTime: number;
+  isRunning: boolean;
+  soundEnabled: boolean;
+  wakeLockEnabled: boolean;
+  alertOpen: boolean;
+  notificationPermission: string;
+  percentRemaining: number;
+}
 
-  // Delay rendering entirely on mount so the position:fixed FAB reliably appears
-  // on PWA cold-start. Some mobile browsers fail to composite fixed elements that
-  // exist from the initial paint — by deferring the first render of this subtree,
-  // we guarantee the browser does a full layout pass when the element is inserted.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 500);
-    return () => clearTimeout(timer);
-  }, []);
+export interface RestTimerActions {
+  handleStart: () => void;
+  handlePause: () => void;
+  handleToggleTimer: () => void;
+  handleReset: () => void;
+  handlePreset: (seconds: number) => void;
+  handleAdd30s: () => void;
+  toggleSound: () => void;
+  toggleWakeLock: () => void;
+  setAlertOpen: (open: boolean) => void;
+  requestNotificationPermission: () => Promise<void>;
+  playTick: () => void;
+  formatTime: (secs: number) => string;
+  formatCompactTime: (secs: number) => string;
+}
 
+export const useRestTimer = (): RestTimerState & RestTimerActions => {
   const wakeLockRef = useRef<{ release(): Promise<void> } | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -126,8 +108,6 @@ const FloatingStopwatch = () => {
     return savedRemainingStr ? parseInt(savedRemainingStr, 10) : totalDur;
   });
 
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
-
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     const saved = safeGetItem('liftly_timer_soundEnabled');
     return saved !== 'false';
@@ -147,9 +127,6 @@ const FloatingStopwatch = () => {
       return 'default';
     }
   });
-
-  const longPressTimerRef = useRef<number | null>(null);
-  const isLongPressRef = useRef<boolean>(false);
 
   // Initialize/Resume AudioContext
   const initAudio = () => {
@@ -388,72 +365,6 @@ const FloatingStopwatch = () => {
     }
   }, [isRunning, handleStart, handlePause]);
 
-  const startPress = useCallback(() => {
-    isLongPressRef.current = false;
-    if (longPressTimerRef.current) {
-      window.clearTimeout(longPressTimerRef.current);
-    }
-    longPressTimerRef.current = window.setTimeout(() => {
-      isLongPressRef.current = true;
-      setIsExpanded(true);
-      playTick();
-      const nav = navigator as unknown as { vibrate?: (pattern: number) => boolean };
-      if (nav.vibrate) {
-        nav.vibrate(50);
-      }
-    }, 600);
-  }, [playTick]);
-
-  const endPress = useCallback(() => {
-    if (longPressTimerRef.current) {
-      window.clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    if (!isLongPressRef.current) {
-      handleToggleTimer();
-    }
-    isLongPressRef.current = false;
-  }, [handleToggleTimer]);
-
-  const handleTouchStart = useCallback((e: TouchEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    startPress();
-  }, [startPress]);
-
-  const handleTouchEnd = useCallback((e: TouchEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    endPress();
-  }, [endPress]);
-
-  const handleTouchCancel = useCallback(() => {
-    if (longPressTimerRef.current) {
-      window.clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    isLongPressRef.current = false;
-  }, []);
-
-  const handleMouseDown = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return; // Only left click
-    startPress();
-  }, [startPress]);
-
-  const handleMouseUp = useCallback(() => {
-    endPress();
-  }, [endPress]);
-
-  const handleMouseLeave = useCallback(() => {
-    if (longPressTimerRef.current) {
-      window.clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    isLongPressRef.current = false;
-  }, []);
-
-  const handleContextMenu = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-  }, []);
-
   const handleReset = () => {
     playTick();
     setIsRunning(false);
@@ -593,301 +504,29 @@ const FloatingStopwatch = () => {
 
   const percentRemaining = totalDuration > 0 ? (remainingTime / totalDuration) * 100 : 0;
 
-  if (!mounted) return null;
-
-  return (
-    <>
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 16,
-          right: 16,
-          zIndex: 1300,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-        }}
-      >
-        {isExpanded ? (
-          // Expanded panel
-          <Paper
-            elevation={8}
-            sx={{
-              width: 310,
-              borderRadius: 3,
-              p: 2,
-              background: darkMode === 'dark' ? 'rgba(30, 30, 30, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${theme.palette.divider}`,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.5,
-              animation: 'fadeIn 0.2s ease-out',
-              '@keyframes fadeIn': {
-                '0%': { opacity: 0, transform: 'scale(0.95) translateY(10px)' },
-                '100%': { opacity: 1, transform: 'scale(1) translateY(0)' },
-              },
-            }}
-          >
-            {/* Header */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Box display="flex" alignItems="center" gap={1}>
-                <Timer color="primary" />
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Rest Timer
-                </Typography>
-              </Box>
-              <IconButton size="small" onClick={() => { playTick(); setIsExpanded(false); }}>
-                <KeyboardArrowDown />
-              </IconButton>
-            </Box>
-
-            {/* Timer Output */}
-            <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              sx={{ my: 1, position: 'relative' }}
-            >
-              <Typography
-                variant="h3"
-                fontWeight="800"
-                sx={{
-                  fontFamily: 'monospace',
-                  letterSpacing: 2,
-                  color: isRunning ? 'primary.main' : 'text.primary',
-                }}
-              >
-                {formatTime(remainingTime)}
-              </Typography>
-
-              <LinearProgress
-                variant="determinate"
-                value={percentRemaining}
-                sx={{
-                  width: '90%',
-                  mt: 1,
-                  borderRadius: 1,
-                  height: 6,
-                  backgroundColor: theme.palette.action.disabledBackground,
-                  '& .MuiLinearProgress-bar': {
-                    transition: isRunning ? 'none' : 'transform 0.4s linear',
-                  }
-                }}
-              />
-            </Box>
-
-            {/* Playback Controls */}
-            <Box display="flex" justifyContent="center" gap={3} alignItems="center">
-              <Tooltip title="Reset">
-                <IconButton onClick={handleReset} color="default" size="large">
-                  <Replay fontSize="medium" />
-                </IconButton>
-              </Tooltip>
-
-              {isRunning ? (
-                <IconButton
-                  onClick={handlePause}
-                  color="primary"
-                  size="large"
-                  sx={{
-                    bgcolor: 'primary.light',
-                    color: 'primary.contrastText',
-                    '&:hover': { bgcolor: 'primary.main' },
-                    width: 56,
-                    height: 56,
-                  }}
-                >
-                  <Pause fontSize="large" />
-                </IconButton>
-              ) : (
-                <IconButton
-                  onClick={handleStart}
-                  color="primary"
-                  size="large"
-                  sx={{
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'primary.dark' },
-                    width: 56,
-                    height: 56,
-                  }}
-                >
-                  <PlayArrow fontSize="large" />
-                </IconButton>
-              )}
-
-              <Tooltip title="+30 Seconds">
-                <IconButton onClick={handleAdd30s} color="primary" size="large">
-                  <Add fontSize="medium" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-
-            {/* Quick Presets */}
-            <Box>
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom fontWeight="bold">
-                Presets (Starts immediately)
-              </Typography>
-              <Grid container spacing={1}>
-                {[60, 90, 120, 180, 300].map((secs) => (
-                  <Grid size={{ xs: 2.4 }} key={secs}>
-                    <Button
-                      fullWidth
-                      variant={totalDuration === secs ? 'contained' : 'outlined'}
-                      size="small"
-                      onClick={() => handlePreset(secs)}
-                      sx={{
-                        py: 0.5,
-                        px: 0,
-                        minWidth: 0,
-                        fontSize: '0.75rem',
-                        borderRadius: 2,
-                      }}
-                    >
-                      {secs >= 60 ? `${secs / 60}m` : `${secs}s`}
-                    </Button>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-
-            {/* Utility Toggles */}
-            <Box display="flex" flexDirection="column" gap={0.5} sx={{ borderTop: `1px solid ${theme.palette.divider}`, pt: 1 }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      size="small"
-                      checked={wakeLockEnabled}
-                      onChange={toggleWakeLock}
-                      color="primary"
-                    />
-                  }
-                  label={
-                    <Box display="flex" alignItems="center" gap={0.5}>
-                      {wakeLockEnabled ? <Lightbulb color="warning" fontSize="small" /> : <LightbulbOutlined fontSize="small" />}
-                      <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                        Keep Awake
-                      </Typography>
-                    </Box>
-                  }
-                />
-
-                <IconButton size="small" onClick={toggleSound} color={soundEnabled ? 'primary' : 'default'}>
-                  {soundEnabled ? <VolumeUp fontSize="small" /> : <VolumeOff fontSize="small" />}
-                </IconButton>
-              </Box>
-
-              {/* Notification Permission Indicator */}
-              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 0.5 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                  Background Alerts:
-                </Typography>
-                {notificationPermission === 'granted' ? (
-                  <Box display="flex" alignItems="center" gap={0.5}>
-                    <NotificationsActive color="success" sx={{ fontSize: 16 }} />
-                    <Typography variant="caption" color="success.main" fontWeight="bold">
-                      Enabled
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Button
-                    size="small"
-                    variant="text"
-                    color="primary"
-                    onClick={requestNotificationPermission}
-                    startIcon={<Notifications sx={{ fontSize: 14 }} />}
-                    sx={{ fontSize: '0.7rem', p: 0, minWidth: 0 }}
-                  >
-                    Enable
-                  </Button>
-                )}
-              </Box>
-            </Box>
-          </Paper>
-        ) : (
-          // Collapsed circular FAB (tap toggles running state, long press opens settings)
-          <IconButton
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchCancel}
-            onContextMenu={handleContextMenu}
-            sx={{
-              width: 56,
-              height: 56,
-              bgcolor: isRunning ? 'primary.main' : 'background.paper',
-              color: isRunning ? 'white' : 'text.primary',
-              boxShadow: 4,
-              border: isRunning ? 'none' : `1px solid ${theme.palette.divider}`,
-              '&:hover': {
-                bgcolor: isRunning ? 'primary.dark' : 'action.hover',
-              },
-              position: 'relative',
-              touchAction: 'none', // Prevents default gestures on mobile
-            }}
-          >
-            <CircularProgress
-              variant="determinate"
-              value={percentRemaining}
-              size={52}
-              thickness={2.5}
-              sx={{
-                color: isRunning ? 'rgba(255,255,255,0.4)' : 'primary.light',
-                position: 'absolute',
-                top: 2,
-                left: 2,
-                '& .MuiCircularProgress-svg': {
-                  transition: isRunning ? 'none' : 'transform 0.4s linear',
-                }
-              }}
-            />
-            <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              sx={{ zIndex: 1 }}
-            >
-              {isRunning ? (
-                <Typography
-                  variant="caption"
-                  fontWeight="bold"
-                  sx={{ fontSize: '10px', color: 'white', lineHeight: 1 }}
-                >
-                  {formatCompactTime(remainingTime)}
-                </Typography>
-              ) : (
-                <Timer fontSize="medium" color={darkMode === 'dark' ? 'inherit' : 'primary'} />
-              )}
-            </Box>
-          </IconButton>
-        )}
-      </Box>
-
-      {/* Completion Dialog Alert */}
-      <Dialog
-        open={alertOpen}
-        onClose={() => { playTick(); setAlertOpen(false); }}
-        aria-labelledby="rest-timer-dialog-title"
-        aria-describedby="rest-timer-dialog-description"
-        sx={{ zIndex: 2000 }}
-      >
-        <DialogTitle id="rest-timer-dialog-title" sx={{ fontWeight: 'bold' }}>
-          ⏱️ Rest Period Complete!
-        </DialogTitle>
-        <DialogActions>
-          <Button onClick={() => { playTick(); setAlertOpen(false); }} color="primary" variant="contained" autoFocus>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
+  return {
+    // State
+    totalDuration,
+    remainingTime,
+    isRunning,
+    soundEnabled,
+    wakeLockEnabled,
+    alertOpen,
+    notificationPermission,
+    percentRemaining,
+    // Actions
+    handleStart,
+    handlePause,
+    handleToggleTimer,
+    handleReset,
+    handlePreset,
+    handleAdd30s,
+    toggleSound,
+    toggleWakeLock,
+    setAlertOpen,
+    requestNotificationPermission,
+    playTick,
+    formatTime,
+    formatCompactTime,
+  };
 };
-
-export default FloatingStopwatch;

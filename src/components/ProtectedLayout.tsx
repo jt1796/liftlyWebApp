@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Box, CssBaseline, Toolbar } from '@mui/material';
 import Sidebar from './layout/Sidebar';
 import Header from './layout/Header';
-import FloatingStopwatch from './FloatingStopwatch';
+import RestTimerProvider from './layout/RestTimer';
 
 const ProtectedLayout = () => {
   const { currentUser } = useAuth();
@@ -20,27 +20,31 @@ const ProtectedLayout = () => {
   }
 
   return (
-    <>
-      <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'row' }}>
-        <CssBaseline />
-        <Header handleDrawerToggle={handleDrawerToggle} />
-        <Sidebar
-          mobileOpen={mobileOpen}
-          handleDrawerToggle={handleDrawerToggle}
-        />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            overflow: 'auto',
-          }}
-        >
-          <Toolbar sx={{ display: {sm: 'none'} }}/>
-          <Outlet />
-        </Box>
-      </Box>
-      <FloatingStopwatch />
-    </>
+    <RestTimerProvider>
+      {(timer) => (
+        <>
+          <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'row' }}>
+            <CssBaseline />
+            <Header handleDrawerToggle={handleDrawerToggle} timer={timer} />
+            <Sidebar
+              mobileOpen={mobileOpen}
+              handleDrawerToggle={handleDrawerToggle}
+              timer={timer}
+            />
+            <Box
+              component="main"
+              sx={{
+                flexGrow: 1,
+                overflow: 'auto',
+              }}
+            >
+              <Toolbar sx={{ display: {sm: 'none'} }}/>
+              <Outlet />
+            </Box>
+          </Box>
+        </>
+      )}
+    </RestTimerProvider>
   );
 };
 

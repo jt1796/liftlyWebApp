@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import {
   Drawer,
+  Divider,
   List,
   ListItem,
   ListItemButton,
@@ -13,15 +15,19 @@ import { Logout, FitnessCenter, ListAlt, QueryStats, Create, Brightness4, Bright
 import { useAuth } from '../../contexts/auth-context-utils';
 import { useApp } from '../../contexts/app-context-utils';
 import { Link } from 'react-router-dom';
+import { SidebarTimerButton } from './RestTimer';
+import type { useRestTimer } from '../../hooks/useRestTimer';
 
 interface SidebarProps {
   mobileOpen: boolean;
   handleDrawerToggle: () => void;
+  timer: ReturnType<typeof useRestTimer>;
 }
 
-const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
+const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
   const { logout } = useAuth();
   const { darkMode, setDarkMode } = useApp();
+  const [timerAnchorEl, setTimerAnchorEl] = useState<HTMLElement | null>(null);
 
   const handleThemeChange = () => {
     setDarkMode(darkMode === 'dark' ? 'light' : 'dark');
@@ -93,6 +99,14 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           <ListItemText primary="Exercises" sx={{ marginRight: 5 }} />
         </ListItemButton>
       </ListItem>
+      <Divider sx={{ my: 1 }} />
+      <SidebarTimerButton
+        timer={timer}
+        anchorEl={timerAnchorEl}
+        onOpen={(e) => setTimerAnchorEl(e.currentTarget)}
+        onClose={() => setTimerAnchorEl(null)}
+      />
+      <Divider sx={{ my: 1 }} />
       <ListItem disablePadding>
         <ListItemButton onClick={() => { logout(); handleDrawerToggle(); }}>
           <ListItemIcon>
