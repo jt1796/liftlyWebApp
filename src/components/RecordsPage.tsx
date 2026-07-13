@@ -18,6 +18,7 @@ import {
   Chip,
   Link,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/auth-context-utils';
@@ -37,6 +38,7 @@ type RecentPRsArray = PR[];
 
 const RecordsPage = () => {
   const { currentUser } = useAuth();
+  const theme = useTheme();
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
   const {
@@ -131,6 +133,7 @@ const RecordsPage = () => {
               {
                 data: exerciseData.map((d) => d.volume),
                 label: 'Volume',
+                color: theme.palette.primary.main,
               },
             ]}
             height={300}
@@ -150,6 +153,7 @@ const RecordsPage = () => {
               {
                 data: exerciseData.map((d) => d.estimatedOneRepMax),
                 label: 'Estimated 1RM',
+                color: theme.palette.secondary.main,
               },
             ]}
             height={300}
@@ -169,6 +173,7 @@ const RecordsPage = () => {
               {
                 data: exerciseData.map((d) => d.maxWeight),
                 label: 'Max Weight',
+                color: theme.palette.primary.main,
               },
             ]}
             height={300}

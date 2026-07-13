@@ -21,13 +21,43 @@ import {
   createTheme,
   ThemeProvider,
   CssBaseline,
+  alpha,
 } from '@mui/material';
+import { useMemo } from 'react';
 import { getThemeById } from './themes';
 
 function App() {
   const { colorTheme } = useApp();
 
-  const theme = createTheme(getThemeById(colorTheme).themeOptions);
+  const theme = useMemo(() => {
+    const def = getThemeById(colorTheme);
+    return createTheme({
+      ...def.themeOptions,
+      components: {
+        ...def.themeOptions.components,
+        MuiCssBaseline: {
+          styleOverrides: (themeParam) => {
+            const isDark = themeParam.palette.mode === 'dark';
+            const stripeColor = alpha(
+              themeParam.palette.primary.main,
+              isDark ? 0.04 : 0.045,
+            );
+            return {
+              body: {
+                backgroundImage: `repeating-linear-gradient(
+                  -45deg,
+                  transparent,
+                  transparent 18px,
+                  ${stripeColor} 18px,
+                  ${stripeColor} 19px
+                )`,
+              },
+            };
+          },
+        },
+      },
+    });
+  }, [colorTheme]);
 
 
   return (

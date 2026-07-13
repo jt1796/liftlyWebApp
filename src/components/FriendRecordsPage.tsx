@@ -19,6 +19,7 @@ import {
   Link,
   Button,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery } from '@tanstack/react-query';
@@ -41,6 +42,7 @@ type RecentPRsArray = PR[];
 const FriendRecordsPage = () => {
   const { friendUid } = useParams<{ friendUid: string }>();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
 
   const { data: profile } = useQuery({
@@ -147,7 +149,7 @@ const FriendRecordsPage = () => {
           </Typography>
           <LineChart
             xAxis={[{ data: exerciseData.map((d) => d.date), scaleType: 'time', valueFormatter: (date) => date.toLocaleDateString() }]}
-            series={[{ data: exerciseData.map((d) => d.volume), label: 'Volume' }]}
+            series={[{ data: exerciseData.map((d) => d.volume), label: 'Volume', color: theme.palette.primary.main }]}
             height={300}
           />
           <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
@@ -155,7 +157,7 @@ const FriendRecordsPage = () => {
           </Typography>
           <LineChart
             xAxis={[{ data: exerciseData.map((d) => d.date), scaleType: 'time', valueFormatter: (date) => date.toLocaleDateString() }]}
-            series={[{ data: exerciseData.map((d) => d.estimatedOneRepMax), label: 'Estimated 1RM' }]}
+            series={[{ data: exerciseData.map((d) => d.estimatedOneRepMax), label: 'Estimated 1RM', color: theme.palette.secondary.main }]}
             height={300}
           />
           <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
@@ -163,7 +165,7 @@ const FriendRecordsPage = () => {
           </Typography>
           <LineChart
             xAxis={[{ data: exerciseData.map((d) => d.date), scaleType: 'time', valueFormatter: (date) => date.toLocaleDateString() }]}
-            series={[{ data: exerciseData.map((d) => d.maxWeight), label: 'Max Weight' }]}
+            series={[{ data: exerciseData.map((d) => d.maxWeight), label: 'Max Weight', color: theme.palette.primary.main }]}
             height={300}
           />
         </Box>

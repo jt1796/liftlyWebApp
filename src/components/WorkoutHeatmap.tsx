@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Typography, useTheme, useMediaQuery, alpha } from '@mui/material';
 import dayjs from 'dayjs';
 import type { Workout } from '../types';
 
@@ -16,6 +16,10 @@ const WorkoutHeatmap: React.FC<WorkoutHeatmapProps> = ({ workouts }) => {
   const cellSize = isXs ? 4 : isMobile ? 4 : isTablet ? 8 : 12;
   const cellGap = isXs ? 1 : isMobile ? 1 : isTablet ? 1.5 : 2;
   const labelWidth = isXs ? 14 : isMobile ? 16 : isTablet ? 24 : 32;
+
+  const primary = theme.palette.primary.main;
+  const emptyColor = alpha(primary, theme.palette.mode === 'dark' ? 0.08 : 0.1);
+  const filledColor = alpha(primary, 0.85);
 
   const data = useMemo(() => {
     const today = dayjs().startOf('day');
@@ -77,8 +81,8 @@ const WorkoutHeatmap: React.FC<WorkoutHeatmapProps> = ({ workouts }) => {
 
   const getColor = (count: number, isOutOfRange: boolean) => {
     if (isOutOfRange) return 'transparent';
-    if (count === 0) return theme.palette.mode === 'dark' ? '#161b22' : '#ebedf0';
-    return '#216e39';
+    if (count === 0) return emptyColor;
+    return filledColor;
   };
 
   return (

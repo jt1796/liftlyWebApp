@@ -110,6 +110,26 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
       },
     },
   },
+  {
+    id: 'hacker-terminal',
+    label: 'Hacker Terminal',
+    icon: '💻',
+    baseMode: 'dark',
+    themeOptions: {
+      palette: {
+        mode: 'dark',
+        primary: { main: '#00e676' },
+        secondary: { main: '#76ff03' },
+        background: { default: '#000000', paper: '#0a0f0a' },
+        text: {
+          primary: '#33ff33',
+          secondary: '#1abf1a',
+          disabled: '#0d6b0d',
+        },
+        divider: '#0d3d0d',
+      },
+    },
+  },
   // ── Light themes ─────────────────────────────────────────────
   {
     id: 'light',
