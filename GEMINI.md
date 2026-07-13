@@ -36,6 +36,7 @@ The project follows a standard React application structure:
         *   `RecordsPage.tsx`: A component for showing PRs and exercise history.
         *   `CalculatorPage.tsx`: A component containing lifting calculators, including an E1RM breaker finder and a 1RM percentage estimator.
         *   `LoginPage.tsx`: Handles user authentication.
+        *   `Dashboard.tsx`: The home screen. Shows a welcome message, a Start/Resume Workout button (checks `liftly-currentWorkout` in localStorage), a workout heatmap, and rotating workout facts.
         *   `WorkoutPage.tsx`: Core component for creating and editing workouts. Supports drag-and-drop re-ordering of exercises and sets, and creating templates of saved workouts with computed 1RM percentages.
         *   `WorkoutListPage.tsx`: A component for listing workouts.
         *   `ExercisesPage.tsx`: A component for managing custom exercises.
