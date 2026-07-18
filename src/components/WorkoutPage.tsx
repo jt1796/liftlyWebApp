@@ -393,7 +393,8 @@ const WorkoutPage: React.FC = () => {
     const fullWorkoutText = workoutToText(workout, format, allWorkouts || []);
     navigator.clipboard.writeText(fullWorkoutText).then(
       () => {
-        setSnackbarMessage(`Workout copied as ${format.toUpperCase()}!`);
+        const displayFormat = format === 'phpbb' ? 'FMT' : format.toUpperCase();
+        setSnackbarMessage(`Workout copied as ${displayFormat}!`);
         setSnackbarSeverity('success');
         setShowSnackbar(true);
       },
@@ -572,7 +573,7 @@ const WorkoutPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ButtonGroup variant="outlined" aria-label="outlined button group" size="small">
             <Button startIcon={<ContentCopyIcon />} onClick={() => handleCopyWorkout('txt')}>txt</Button>
-            <Button startIcon={<ContentCopyIcon />} onClick={() => handleCopyWorkout('phpbb')}>phpbb</Button>
+            <Button startIcon={<ContentCopyIcon />} onClick={() => handleCopyWorkout('phpbb')}>fmt</Button>
           </ButtonGroup>
         </Box>
       </Box>

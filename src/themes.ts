@@ -23,6 +23,9 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     themeOptions: {
       palette: {
         mode: 'dark',
+        primary: { main: '#6366f1' },
+        secondary: { main: '#ec4899' },
+        background: { default: '#0b0f19', paper: '#111827' },
       },
     },
   },
@@ -34,9 +37,9 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     themeOptions: {
       palette: {
         mode: 'dark',
-        primary: { main: '#60a5fa' },
+        primary: { main: '#38bdf8' },
         secondary: { main: '#818cf8' },
-        background: { default: '#0f172a', paper: '#1e293b' },
+        background: { default: '#030712', paper: '#0f172a' },
       },
     },
   },
@@ -48,9 +51,9 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     themeOptions: {
       palette: {
         mode: 'dark',
-        primary: { main: '#a78bfa' },
+        primary: { main: '#c084fc' },
         secondary: { main: '#f472b6' },
-        background: { default: '#1a1025', paper: '#271b36' },
+        background: { default: '#090514', paper: '#140c24' },
       },
     },
   },
@@ -62,9 +65,9 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     themeOptions: {
       palette: {
         mode: 'dark',
-        primary: { main: '#4ade80' },
+        primary: { main: '#34d399' },
         secondary: { main: '#a3e635' },
-        background: { default: '#0d1f12', paper: '#162b1a' },
+        background: { default: '#022c22', paper: '#064e3b' },
       },
     },
   },
@@ -77,8 +80,8 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
       palette: {
         mode: 'dark',
         primary: { main: '#f97316' },
-        secondary: { main: '#fbbf24' },
-        background: { default: '#1c1008', paper: '#2a1a0e' },
+        secondary: { main: '#facc15' },
+        background: { default: '#180805', paper: '#2a140b' },
       },
     },
   },
@@ -91,8 +94,8 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
       palette: {
         mode: 'dark',
         primary: { main: '#06b6d4' },
-        secondary: { main: '#e879f9' },
-        background: { default: '#0a0a0f', paper: '#14141f' },
+        secondary: { main: '#ec4899' },
+        background: { default: '#04020a', paper: '#0d071a' },
       },
     },
   },
@@ -104,9 +107,9 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     themeOptions: {
       palette: {
         mode: 'dark',
-        primary: { main: '#fb7185' },
-        secondary: { main: '#fda4af' },
-        background: { default: '#1a0a10', paper: '#2a1420' },
+        primary: { main: '#f43f5e' },
+        secondary: { main: '#fb7185' },
+        background: { default: '#0f050b', paper: '#1f0b18' },
       },
     },
   },
@@ -159,6 +162,9 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     themeOptions: {
       palette: {
         mode: 'light',
+        primary: { main: '#2563eb' },
+        secondary: { main: '#4f46e5' },
+        background: { default: '#f8fafc', paper: '#ffffff' },
       },
     },
   },
@@ -171,7 +177,7 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
       palette: {
         mode: 'light',
         primary: { main: '#0284c7' },
-        secondary: { main: '#0891b2' },
+        secondary: { main: '#0ea5e9' },
         background: { default: '#f0f9ff', paper: '#ffffff' },
       },
     },
@@ -200,7 +206,7 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
         mode: 'light',
         primary: { main: '#db2777' },
         secondary: { main: '#f472b6' },
-        background: { default: '#fdf2f8', paper: '#ffffff' },
+        background: { default: '#fff1f2', paper: '#ffffff' },
       },
     },
   },
@@ -228,7 +234,7 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
         mode: 'light',
         primary: { main: '#059669' },
         secondary: { main: '#10b981' },
-        background: { default: '#ecfdf5', paper: '#ffffff' },
+        background: { default: '#f0fdf4', paper: '#ffffff' },
       },
     },
   },
@@ -240,9 +246,9 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
     themeOptions: {
       palette: {
         mode: 'light',
-        primary: { main: '#b45309' },
-        secondary: { main: '#d97706' },
-        background: { default: '#fefce8', paper: '#fffbeb' },
+        primary: { main: '#d97706' },
+        secondary: { main: '#b45309' },
+        background: { default: '#fdfaf2', paper: '#ffffff' },
       },
     },
   },

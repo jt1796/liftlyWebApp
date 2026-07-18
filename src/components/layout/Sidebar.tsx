@@ -42,7 +42,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <Create />
           </ListItemIcon>
-          <ListItemText primary="New Workout" sx={{ marginRight: 5 }} />
+          <ListItemText primary="New Workout" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -50,7 +50,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <ListAlt />
           </ListItemIcon>
-          <ListItemText primary="My Workouts" sx={{ marginRight: 5 }} />
+          <ListItemText primary="My Workouts" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -58,7 +58,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <Construction />
           </ListItemIcon>
-          <ListItemText primary="Templates" sx={{ marginRight: 5 }} />
+          <ListItemText primary="Templates" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -66,7 +66,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <Terminal />
           </ListItemIcon>
-          <ListItemText primary="Scripts" sx={{ marginRight: 5 }} />
+          <ListItemText primary="Scripts" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -74,7 +74,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <QueryStats />
           </ListItemIcon>
-          <ListItemText primary="Records" sx={{ marginRight: 5 }} />
+          <ListItemText primary="Records" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -82,7 +82,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <Calculate />
           </ListItemIcon>
-          <ListItemText primary="Calculators" sx={{ marginRight: 5 }} />
+          <ListItemText primary="Calculators" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -90,7 +90,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <PeopleAlt />
           </ListItemIcon>
-          <ListItemText primary="Friends" sx={{ marginRight: 5 }} />
+          <ListItemText primary="Friends" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -98,7 +98,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <FitnessCenter />
           </ListItemIcon>
-          <ListItemText primary="Exercises" sx={{ marginRight: 5 }} />
+          <ListItemText primary="Exercises" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <Divider sx={{ my: 1 }} />
@@ -114,7 +114,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemIcon>
             <Logout />
           </ListItemIcon>
-          <ListItemText primary="Logout" sx={{ marginRight: 5 }} />
+          <ListItemText primary="Logout" primaryTypographyProps={{ noWrap: true }} />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -125,7 +125,8 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
           <ListItemText
             primary="Theme"
             secondary={COLOR_THEMES.find((t) => t.id === colorTheme)?.label}
-            sx={{ marginRight: 5 }}
+            primaryTypographyProps={{ noWrap: true }}
+            secondaryTypographyProps={{ noWrap: true }}
           />
         </ListItemButton>
       </ListItem>
@@ -198,6 +199,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
         }}
         sx={{
           display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 220 },
         }}
       >
         {drawerContent}
@@ -207,6 +209,8 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, timer }: SidebarProps) => {
         sx={{
           display: { xs: 'none', sm: 'block' },
           width: 220,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 220 },
         }}
         open
       >
