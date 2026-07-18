@@ -153,7 +153,7 @@ const RecordsPage = () => {
               {
                 data: exerciseData.map((d) => d.estimatedOneRepMax),
                 label: 'Estimated 1RM',
-                color: theme.palette.secondary.main,
+                color: theme.palette.primary.main,
               },
             ]}
             height={300}

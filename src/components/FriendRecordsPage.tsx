@@ -157,7 +157,7 @@ const FriendRecordsPage = () => {
           </Typography>
           <LineChart
             xAxis={[{ data: exerciseData.map((d) => d.date), scaleType: 'time', valueFormatter: (date) => date.toLocaleDateString() }]}
-            series={[{ data: exerciseData.map((d) => d.estimatedOneRepMax), label: 'Estimated 1RM', color: theme.palette.secondary.main }]}
+            series={[{ data: exerciseData.map((d) => d.estimatedOneRepMax), label: 'Estimated 1RM', color: theme.palette.primary.main }]}
             height={300}
           />
           <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
