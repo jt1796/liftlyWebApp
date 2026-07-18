@@ -336,6 +336,17 @@ describe('localUtils', () => {
       expect(result!.reps).toEqual(reps);
       expect(result!.weight).toEqual(weight);
     });
+
+    it('should use 10 interval step and 10 starting weight when exercise name contains DB', () => {
+      // For DB, targetE1RM of 0 should yield starting weight of 10
+      expect(findSetToPR(0, 'DB Curl')).toEqual({ reps: 3, weight: 10 });
+
+      // targetE1RM = 45. DB step is 10.
+      const result = findSetToPR(45, 'DB Curl');
+      expect(result).toBeDefined();
+      expect(result!.weight % 10).toBe(0);
+      expect(result!.weight).toBeGreaterThanOrEqual(10);
+    });
   });
 
   describe('workoutToText', () => {

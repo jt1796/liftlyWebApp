@@ -84,11 +84,24 @@ const CalculatorPage: React.FC = () => {
   // Handle preset exercise selection for E1RM Breaker
   const handleExerciseChange = (_event: React.SyntheticEvent, newValue: string | null) => {
     setSelectedExercise(newValue);
-    if (newValue && workouts) {
-      const latestPRs = getLatestExercisePRs(workouts, newValue);
-      if (latestPRs.e1rm) {
-        setTargetE1RM(latestPRs.e1rm.value.toString());
+    if (newValue) {
+      const isDB = /\bdb\b/i.test(newValue);
+      if (isDB) {
+        setWeightStep('10');
+        setStartingWeight('10');
+      } else {
+        setWeightStep('5');
+        setStartingWeight('45');
       }
+      if (workouts) {
+        const latestPRs = getLatestExercisePRs(workouts, newValue);
+        if (latestPRs.e1rm) {
+          setTargetE1RM(latestPRs.e1rm.value.toString());
+        }
+      }
+    } else {
+      setWeightStep('5');
+      setStartingWeight('45');
     }
   };
 

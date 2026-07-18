@@ -180,19 +180,26 @@ export const calculateExerciseMetrics = (
   return data.sort((a, b) => a.date.getTime() - b.date.getTime());
 };
 
-export const findSetToPR = (targetE1RM: number) => {
+export const findSetToPR = (targetE1RM: number, exerciseName?: string) => {
+  const isDB = exerciseName ? /\bdb\b/i.test(exerciseName) : false;
+  const step = isDB ? 10 : 5;
+  const startWeight = isDB ? 10 : 5;
+
   let bestWeight = 0;
   let bestReps = 0;
   let smallestDifference = Infinity;
 
   for (let reps = 3; reps <= 20; reps++) {
     let requiredWeight = Math.ceil(targetE1RM / (1 + reps / 30));
-    requiredWeight = Math.ceil(requiredWeight / 5) * 5;
+    requiredWeight = Math.ceil(requiredWeight / step) * step;
+    if (requiredWeight < startWeight) {
+      requiredWeight = startWeight;
+    }
 
     let currentE1RM = calculateOneRepMax(requiredWeight, reps);
 
     if (currentE1RM <= targetE1RM) {
-      requiredWeight += 5;
+      requiredWeight += step;
       currentE1RM = calculateOneRepMax(requiredWeight, reps);
     }
 

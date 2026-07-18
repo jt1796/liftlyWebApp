@@ -467,7 +467,7 @@ const WorkoutPage: React.FC = () => {
     const targetE1RM = e1rmSuggestions[exerciseName];
 
     if (targetE1RM) {
-      const suggestedSet = findSetToPR(targetE1RM);
+      const suggestedSet = findSetToPR(targetE1RM, exerciseName);
       if (suggestedSet) {
         const newExercises = [...workout.exercises];
         const newSetWithId = { ...suggestedSet, id: generateId() };
