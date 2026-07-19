@@ -11,6 +11,7 @@ import {
   calculateTotalWorkoutWeight,
   getWorkoutWeightObject,
   workoutToTemplate,
+  getE1RmSuggestions,
 } from '../localUtils';
 import type { Workout } from '../../types';
 
@@ -576,6 +577,42 @@ describe('localUtils', () => {
       // Set 2 weight: Math.round(120 / 120 * 100) = 100%
       expect(template.exercises[0].sets[1].weight).toBe(100);
       expect(template.exercises[0].sets[1].reps).toBe(1);
+    });
+  });
+
+  describe('getE1RmSuggestions', () => {
+    it('should only include E1RM from workouts up to current workout date, ignoring future workouts', () => {
+      const workoutJan: Workout = {
+        id: 'jan-workout',
+        date: new Date('2026-01-01'),
+        exercises: [
+          {
+            name: 'Bench Press',
+            sets: [{ weight: 100, reps: 1 }], // 100 E1RM
+          },
+        ],
+      };
+
+      const workoutJun: Workout = {
+        id: 'jun-workout',
+        date: new Date('2026-06-01'),
+        exercises: [
+          {
+            name: 'Bench Press',
+            sets: [{ weight: 200, reps: 1 }], // 200 E1RM
+          },
+        ],
+      };
+
+      const allWorkouts = [workoutJan, workoutJun];
+
+      // When checking January workout, June workout (future) should be ignored
+      const janSuggestions = getE1RmSuggestions(allWorkouts, workoutJan);
+      expect(janSuggestions['Bench Press']).toBe(100);
+
+      // When checking June workout, both January and June workouts are eligible
+      const junSuggestions = getE1RmSuggestions(allWorkouts, workoutJun);
+      expect(junSuggestions['Bench Press']).toBe(200);
     });
   });
 });

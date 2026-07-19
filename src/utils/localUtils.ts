@@ -220,23 +220,31 @@ export const findSetToPR = (targetE1RM: number, exerciseName?: string) => {
 };
 
 export const getE1RmSuggestions = (allWorkouts: Workout[], currentWorkout: Workout): Record<string, number> => {
+  const currentWorkoutDate = currentWorkout.date ? new Date(currentWorkout.date) : new Date();
+  const currentWorkoutTime = isNaN(currentWorkoutDate.getTime()) ? new Date().getTime() : currentWorkoutDate.getTime();
 
-  const threeMonthsAgo = dayjs().subtract(3, 'month');
-  const recentWorkouts = allWorkouts.filter((w) => dayjs(w.date).isAfter(threeMonthsAgo));
+  // Filter workouts that occurred on or before the current workout's timestamp, excluding current workout itself
+  const priorWorkouts = allWorkouts.filter((w) => {
+    if (!w.date || w.id === currentWorkout.id) return false;
+    const wTime = new Date(w.date).getTime();
+    return !isNaN(wTime) && wTime <= currentWorkoutTime;
+  });
 
   const newE1RMSuggestions: Record<string, number> = {};
 
   for (const exercise of currentWorkout.exercises) {
     let maxE1RMForExercise = 0;
 
-    for (const pastWorkout of recentWorkouts) {
+    for (const pastWorkout of priorWorkouts) {
       const matchingPastExercise = pastWorkout.exercises.find(
         (e) => e.name === exercise.name
       );
 
       if (matchingPastExercise) {
         for (const set of matchingPastExercise.sets) {
-          const e1rm = calculateOneRepMax(set.weight, set.reps);
+          const weight = isNaN(set.weight) || set.weight < 0 ? 0 : set.weight;
+          const reps = isNaN(set.reps) || set.reps < 0 ? 0 : set.reps;
+          const e1rm = calculateOneRepMax(weight, reps);
           if (e1rm > maxE1RMForExercise) {
             maxE1RMForExercise = e1rm;
           }
@@ -245,7 +253,9 @@ export const getE1RmSuggestions = (allWorkouts: Workout[], currentWorkout: Worko
     }
 
     for (const set of exercise.sets) {
-      const e1rm = calculateOneRepMax(set.weight, set.reps);
+      const weight = isNaN(set.weight) || set.weight < 0 ? 0 : set.weight;
+      const reps = isNaN(set.reps) || set.reps < 0 ? 0 : set.reps;
+      const e1rm = calculateOneRepMax(weight, reps);
       if (e1rm > maxE1RMForExercise) {
         maxE1RMForExercise = e1rm;
       }

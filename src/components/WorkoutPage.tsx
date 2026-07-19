@@ -629,87 +629,121 @@ const WorkoutPage: React.FC = () => {
                         <Droppable droppableId={`sets-${exercise.id}`} type="set">
                           {(provided) => (
                             <Box {...provided.droppableProps} ref={provided.innerRef} sx={{ minHeight: '10px' }}>
-                              {exercise.sets.map((set, setIndex) => (
-                                <Draggable key={set.id} draggableId={set.id!} index={setIndex}>
-                                  {(provided) => (
-                                    <Stack
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      direction="row"
-                                      spacing={2}
-                                      alignItems="center"
-                                      sx={{ mt: 2 }}
-                                      justifyContent="space-between"
-                                    >
-                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Box {...provided.dragHandleProps} sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', ml: -1 }}>
-                                          <DragIndicatorIcon fontSize="small" color="action" />
-                                        </Box>
-                                        <TextField
-                                          type="number"
-                                          label="Weight"
-                                          value={set.weight}
-                                          sx={{ maxWidth: '75px' }}
-                                          onFocus={e => e.target.select()}
-                                          InputProps={{
-                                            inputProps: { min: 0 }
-                                          }}
-                                          onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseFloat(e.target.value))}
-                                        />
-                                        <TextField
-                                          type="number"
-                                          label="Reps"
-                                          value={set.reps}
-                                          sx={{ maxWidth: '75px' }}
-                                          onFocus={e => e.target.select()}
-                                          InputProps={{
-                                            inputProps: { min: 0 }
-                                          }}
-                                          error={set.reps === 0}
-                                          onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
-                                        />
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                          <Box sx={{ minWidth: '60px', textAlign: 'center' }}>
-                                            <Typography variant="body2">
-                                              {calculateOneRepMax(set.weight, set.reps)}
-                                            </Typography>
-                                            <Typography variant="caption" sx={{ lineHeight: 1, fontSize: 6 }}>
-                                              E1RM
-                                            </Typography>
+                              {exercise.sets.map((set, setIndex) => {
+                                const setWeight = isNaN(set.weight) || set.weight < 0 ? 0 : set.weight;
+                                const setReps = isNaN(set.reps) || set.reps < 0 ? 0 : set.reps;
+                                const setE1RM = calculateOneRepMax(setWeight, setReps);
+                                const globalE1RM = e1rmSuggestions[exercise.name] || 0;
+                                const hasIntensities = globalE1RM > 0 && setWeight > 0 && setReps > 0;
+                                const weightIntensity = hasIntensities ? Math.round((setWeight / globalE1RM) * 100) : 0;
+                                const e1rmIntensity = hasIntensities ? Math.round((setE1RM / globalE1RM) * 100) : 0;
+
+                                return (
+                                  <Draggable key={set.id} draggableId={set.id!} index={setIndex}>
+                                    {(provided) => (
+                                      <Stack
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        direction="row"
+                                        spacing={2}
+                                        alignItems="center"
+                                        sx={{ mt: 2 }}
+                                        justifyContent="space-between"
+                                      >
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                          <Box {...provided.dragHandleProps} sx={{ display: 'flex', alignItems: 'center', cursor: 'grab', ml: -1 }}>
+                                            <DragIndicatorIcon fontSize="small" color="action" />
                                           </Box>
-                                          {set.id && prDetails.setPRDetails[set.id]?.isPR && (
+                                          <TextField
+                                            type="number"
+                                            label="Weight"
+                                            value={set.weight}
+                                            sx={{ maxWidth: '75px' }}
+                                            onFocus={e => e.target.select()}
+                                            InputProps={{
+                                              inputProps: { min: 0 }
+                                            }}
+                                            onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'weight', parseFloat(e.target.value))}
+                                          />
+                                          <TextField
+                                            type="number"
+                                            label="Reps"
+                                            value={set.reps}
+                                            sx={{ maxWidth: '75px' }}
+                                            onFocus={e => e.target.select()}
+                                            InputProps={{
+                                              inputProps: { min: 0 }
+                                            }}
+                                            error={set.reps === 0}
+                                            onChange={(e) => handleSetChange(exerciseIndex, setIndex, 'reps', parseInt(e.target.value))}
+                                          />
+                                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                             <Tooltip
                                               title={
-                                                <Box sx={{ p: 0.5 }}>
-                                                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.75rem' }}>
-                                                    Personal Record Set!
-                                                  </Typography>
-                                                  {prDetails.setPRDetails[set.id].isMaxWeightPR && (
-                                                    <Typography variant="caption" display="block">
-                                                      • Max Weight: {prDetails.setPRDetails[set.id].prevMaxWeight} → {set.weight} lbs
+                                                hasIntensities ? (
+                                                  <Box sx={{ p: 0.5 }}>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.75rem' }}>
+                                                      Set Metrics (Global E1RM: {globalE1RM} lbs)
                                                     </Typography>
-                                                  )}
-                                                  {prDetails.setPRDetails[set.id].isE1RMPR && (
                                                     <Typography variant="caption" display="block">
-                                                      • E1RM: {prDetails.setPRDetails[set.id].prevMax1RM} → {calculateOneRepMax(set.weight, set.reps)} lbs
+                                                      • Set E1RM: {setE1RM} lbs
                                                     </Typography>
-                                                  )}
-                                                </Box>
+                                                    <Typography variant="caption" display="block">
+                                                      • Weight Intensity (%W): {weightIntensity}% ({setWeight} / {globalE1RM} lbs)
+                                                    </Typography>
+                                                    <Typography variant="caption" display="block">
+                                                      • E1RM Intensity (%E1RM): {e1rmIntensity}% ({setE1RM} / {globalE1RM} lbs)
+                                                    </Typography>
+                                                  </Box>
+                                                ) : (
+                                                  `Estimated 1-Rep Max: ${setE1RM} lbs`
+                                                )
                                               }
                                               arrow
                                             >
-                                              <WorkspacePremiumIcon sx={{ color: '#FFD700', fontSize: '1.25rem' }} />
+                                              <Box sx={{ minWidth: hasIntensities ? '95px' : '55px', textAlign: 'center' }}>
+                                                <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                                                  {hasIntensities ? `${setE1RM} / ${weightIntensity} / ${e1rmIntensity}` : setE1RM}
+                                                </Typography>
+                                                <Typography variant="caption" sx={{ lineHeight: 1, fontSize: 8, whiteSpace: 'nowrap' }} color="text.secondary">
+                                                  {hasIntensities ? 'E1RM / %W / %E1RM' : 'E1RM'}
+                                                </Typography>
+                                              </Box>
                                             </Tooltip>
-                                          )}
+                                            {set.id && prDetails.setPRDetails[set.id]?.isPR && (
+                                              <Tooltip
+                                                title={
+                                                  <Box sx={{ p: 0.5 }}>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.75rem' }}>
+                                                      Personal Record Set!
+                                                    </Typography>
+                                                    {prDetails.setPRDetails[set.id].isMaxWeightPR && (
+                                                      <Typography variant="caption" display="block">
+                                                        • Max Weight: {prDetails.setPRDetails[set.id].prevMaxWeight} → {set.weight} lbs
+                                                      </Typography>
+                                                    )}
+                                                    {prDetails.setPRDetails[set.id].isE1RMPR && (
+                                                      <Typography variant="caption" display="block">
+                                                        • E1RM: {prDetails.setPRDetails[set.id].prevMax1RM} → {setE1RM} lbs
+                                                      </Typography>
+                                                    )}
+                                                  </Box>
+                                                }
+                                                arrow
+                                              >
+                                                <WorkspacePremiumIcon sx={{ color: '#FFD700', fontSize: '1.25rem' }} />
+                                              </Tooltip>
+                                            )}
+                                          </Box>
                                         </Box>
-                                      </Box>
-                                      <IconButton onClick={() => removeSet(exerciseIndex, setIndex)} color="error" size="small">
-                                        <DeleteIcon />
-                                      </IconButton>
-                                    </Stack>
-                                  )}
-                                </Draggable>
-                              ))}
+                                        <IconButton onClick={() => removeSet(exerciseIndex, setIndex)} color="error" size="small">
+                                          <DeleteIcon />
+                                        </IconButton>
+                                      </Stack>
+                                    )}
+                                  </Draggable>
+                                );
+                              })}
                               {provided.placeholder}
                             </Box>
                           )}
