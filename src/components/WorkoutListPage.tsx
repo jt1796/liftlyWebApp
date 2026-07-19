@@ -77,9 +77,10 @@ const WorkoutListPage: React.FC = () => {
                       sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                     >
                       <ListItemText
-                        primary={workout.exercises
-                          .map((e) => e.name)
-                          .join(', ')}
+                        primary={
+                          (workout.title ? `${workout.title} - ` : '') +
+                          workout.exercises.map((e) => e.name).join(', ')
+                        }
                         secondary={workout.date.toLocaleDateString()}
                       />
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>

@@ -316,7 +316,7 @@ const ScriptsPage = () => {
       }
 
       // Save workout to localStorage and navigate to /workout
-      localStorage.setItem('liftly-currentWorkout', JSON.stringify(result.workout));
+      localStorage.setItem('liftly-currentWorkout', JSON.stringify({ ...result.workout, title: script.name }));
       navigate('/workout');
     } catch (error: unknown) {
       console.error('Error executing script:', error);

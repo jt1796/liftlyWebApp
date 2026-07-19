@@ -585,6 +585,14 @@ const WorkoutPage: React.FC = () => {
             onChange={(e) => e && setWorkout({ ...workout, date: e.toDate() })}
           />
         </LocalizationProvider>
+        <TextField
+          label="Workout Title"
+          value={workout.title || ''}
+          onChange={(e) => setWorkout({ ...workout, title: e.target.value || undefined })}
+          placeholder="Optional workout title"
+          fullWidth
+          variant="outlined"
+        />
       </Stack>
 
       <DragDropContext onDragEnd={onDragEnd}>

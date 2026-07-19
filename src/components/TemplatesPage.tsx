@@ -226,6 +226,7 @@ const TemplatesPage = () => {
 
   const handleConfirmStartWorkout = () => {
     const workoutFromTemplate = {
+      title: selectedTemplate.name,
       date: new Date(),
       exercises: selectedTemplate.exercises.map(exercise => ({
         ...exercise,

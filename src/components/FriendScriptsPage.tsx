@@ -176,7 +176,7 @@ const FriendScriptsPage: React.FC = () => {
 
       const result = await executeScript(script, history);
 
-      localStorage.setItem('liftly-currentWorkout', JSON.stringify(result.workout));
+      localStorage.setItem('liftly-currentWorkout', JSON.stringify({ ...result.workout, title: script.name }));
       navigate('/workout');
     } catch (error: unknown) {
       console.error('Error executing script:', error);

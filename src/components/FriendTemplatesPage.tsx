@@ -129,6 +129,7 @@ const FriendTemplatesPage: React.FC = () => {
   const handleConfirmStartWorkout = () => {
     if (!selectedTemplate) return;
     const workoutFromTemplate = {
+      title: selectedTemplate.name,
       date: new Date(),
       exercises: selectedTemplate.exercises.map((exercise) => ({
         ...exercise,

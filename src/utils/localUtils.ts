@@ -320,9 +320,9 @@ export const workoutToText = (workout: Workout, format: 'txt' | 'phpbb', allWork
     })
     .join('\n\n');
 
-  const title = `Workout on ${dayjs(workout.date).format(
-    'MMMM D, YYYY'
-  )}`;
+  const title = workout.title
+    ? `${workout.title} — ${dayjs(workout.date).format('MMMM D, YYYY')}`
+    : `Workout on ${dayjs(workout.date).format('MMMM D, YYYY')}`;
   const dateSegment = format === 'txt' ? title : `[u][size=200]${title}[/size][/u]`;
 
   return dateSegment + '\n\n' + workoutText;
