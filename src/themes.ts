@@ -45,15 +45,28 @@ export const COLOR_THEMES: ColorThemeDefinition[] = [
   },
   {
     id: 'deep-purple',
-    label: 'Deep Purple',
-    icon: '🔮',
+    label: 'Shades of Purple',
+    icon: '🟪',
     baseMode: 'dark',
     themeOptions: {
       palette: {
         mode: 'dark',
-        primary: { main: '#c084fc' },
-        secondary: { main: '#f472b6' },
-        background: { default: '#090514', paper: '#140c24' },
+        primary: {
+          main: '#fad000',
+          contrastText: '#1e1e3f',
+        },
+        secondary: {
+          main: '#a599e9',
+        },
+        background: {
+          default: '#2d2b55',
+          paper: '#1e1e3f',
+        },
+        text: {
+          primary: '#ffffff',
+          secondary: '#b3b0d6',
+        },
+        divider: 'rgba(255, 255, 255, 0.12)',
       },
     },
   },
