@@ -17,6 +17,13 @@ export interface Workout {
   exercises: Exercise[];
 }
 
+export interface WorkoutYearDoc {
+  userId: string;
+  year: number;                          // e.g. 2025
+  workouts: Record<string, Workout>;     // keyed by workout ID
+  updatedAt: Date;                       // last modification timestamp
+}
+
 export interface CustomExercise {
   name: string;
 }

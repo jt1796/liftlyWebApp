@@ -1,6 +1,6 @@
-import { collection, doc, getDoc, setDoc, query, where, getDocs, Timestamp, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, query, where, getDocs, Timestamp, updateDoc, deleteDoc, deleteField, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { CustomExercise, Workout, Template, Script, UserProfile, Friendship } from '../types';
+import type { CustomExercise, Workout, Template, Script, UserProfile, Friendship, WorkoutYearDoc } from '../types';
 import type { User } from 'firebase/auth';
 
 const getCustomExercisesCollection = () => collection(db, 'customExercises');
@@ -27,38 +27,117 @@ export const saveCustomExercises = async (
 };
 
 export const getWorkoutsForUser = async (userId: string): Promise<Workout[]> => {
-    const workoutsCol = collection(db, 'workouts');
-    const q = query(workoutsCol, where('userId', '==', userId));
-    const querySnapshot = await getDocs(q);
-    const workouts: Workout[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
+  const q = query(
+    collection(db, 'workoutYears'),
+    where('userId', '==', userId)
+  );
+  const snapshot = await getDocs(q);  // ~3-4 document reads (one per year)
+
+  const workouts: Workout[] = [];
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data() as WorkoutYearDoc;
+    for (const [workoutId, workout] of Object.entries(data.workouts)) {
       workouts.push({
-        ...data,
-        id: doc.id,
-        date: (data.date as Timestamp).toDate(),
-      } as Workout);
-    });
-
-    workouts.sort((a, b) => b.date.getTime() - a.date.getTime());
-    return workouts;
-  };
-
-  export const getWorkoutById = async (id: string): Promise<Workout | null> => {
-    const docRef = doc(db, 'workouts', id);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      return {
-        id: docSnap.id,
-        ...data,
-        date: (data.date as Timestamp).toDate(),
-      } as Workout;
-    } else {
-      return null;
+        ...workout,
+        id: workoutId,
+        date: (workout.date as unknown as Timestamp).toDate(),
+      });
     }
-  };
+  });
+
+  workouts.sort((a, b) => b.date.getTime() - a.date.getTime());
+  return workouts;
+};
+
+/**
+ * Save a workout (create or update) in the year-bucketed collection.
+ * Returns the workout ID.
+ */
+export const saveWorkout = async (
+  userId: string,
+  workout: Workout,
+  existingId?: string
+): Promise<string> => {
+  const year = workout.date.getFullYear();
+  const yearDocId = `${userId}_${year}`;
+  const yearDocRef = doc(db, 'workoutYears', yearDocId);
+
+  // Strip id from workout data — it's the map key, not a field
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: _id, ...workoutData } = workout;
+
+  if (existingId) {
+    // Update existing workout
+    // Check if the workout year changed (date was edited)
+    const existingYear = await getWorkoutYear(userId, existingId);
+    if (existingYear !== null && existingYear !== year) {
+      // Year changed — delete from old year doc, create in new
+      const oldYearDocRef = doc(db, 'workoutYears', `${userId}_${existingYear}`);
+      await updateDoc(oldYearDocRef, {
+        [`workouts.${existingId}`]: deleteField(),
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    await setDoc(yearDocRef, {
+      userId,
+      year,
+      workouts: { [existingId]: workoutData },
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return existingId;
+  } else {
+    // Create new workout
+    const workoutId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+    await setDoc(yearDocRef, {
+      userId,
+      year,
+      workouts: { [workoutId]: workoutData },
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return workoutId;
+  }
+};
+
+/**
+ * Delete a workout from the year-bucketed collection.
+ */
+export const deleteWorkout = async (
+  userId: string,
+  workoutId: string,
+  workoutDate: Date
+): Promise<void> => {
+  const year = workoutDate.getFullYear();
+  const yearDocRef = doc(db, 'workoutYears', `${userId}_${year}`);
+
+  await updateDoc(yearDocRef, {
+    [`workouts.${workoutId}`]: deleteField(),
+    updatedAt: serverTimestamp(),
+  });
+};
+
+/**
+ * Helper: find which year a workout belongs to by scanning cached year docs.
+ * Returns null if not found.
+ */
+const getWorkoutYear = async (userId: string, workoutId: string): Promise<number | null> => {
+  const q = query(
+    collection(db, 'workoutYears'),
+    where('userId', '==', userId)
+  );
+  const snapshot = await getDocs(q);
+
+  for (const docSnap of snapshot.docs) {
+    const data = docSnap.data() as WorkoutYearDoc;
+    if (data.workouts[workoutId]) {
+      return data.year;
+    }
+  }
+  return null;
+};
 
 const getTemplatesCollection = () => collection(db, 'templates');
 

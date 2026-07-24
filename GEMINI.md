@@ -27,9 +27,9 @@ The project follows a standard React application structure:
 *   `public/`: Contains static assets like `index.html`, icons, and PWA configurations.
     *   `sw.js`: Service Worker for handling background/offline notification scheduling for the rest timer.
     *   `src/`: Contains the main application source code.
-    *   `types.ts`: Defines TypeScript interfaces for data structures like `Set`, `Exercise`, `Workout`, `CustomExercise`, `Template`, and `Script`.
+    *   `types.ts`: Defines TypeScript interfaces for data structures like `Set`, `Exercise`, `Workout`, `WorkoutYearDoc`, `CustomExercise`, `Template`, and `Script`.
     *   `utils/`: Contains utility functions.
-        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data, workout templates, user scripts, user profiles, and friendships.
+        *   `database.ts`: Handles interactions with Firebase Firestore for custom exercises, workout data (year-bucketed in `workoutYears` collection via `getWorkoutsForUser`, `saveWorkout`, `deleteWorkout`), workout templates, user scripts, user profiles, and friendships.
         *   `scriptExecutor.ts`: Executes user-provided JavaScript snippets in a Web Worker sandbox to generate new workouts based on history.
         *   `localUtils.ts`: Provides functions for filtering, calculating one-rep max, tracking personal records (PRs) including real-time details (`getPRDetailsForWorkout`), analyzing exercise metrics, generating E1RM suggestions, converting workout data to text, getting exercise history, calculating total workout weight (`calculateTotalWorkoutWeight`), matching weight to progressive ascii/emoji objects (`getWorkoutWeightObject`), and converting workouts to templates with calculated 1RM percentages (`workoutToTemplate`).
     *   `components/`: Contains reusable React components.
@@ -37,7 +37,7 @@ The project follows a standard React application structure:
         *   `CalculatorPage.tsx`: A component containing lifting calculators, including an E1RM breaker finder and a 1RM percentage estimator.
         *   `LoginPage.tsx`: Handles user authentication.
         *   `Dashboard.tsx`: The home screen. Shows a welcome message, a Start/Resume Workout button (checks `liftly-currentWorkout` in localStorage), a workout heatmap, and rotating workout facts.
-        *   `WorkoutPage.tsx`: Core component for creating and editing workouts. Supports drag-and-drop re-ordering of exercises and sets, set intensity percentage indicators (%W and %E1RM over global E1RM estimate), and creating templates of saved workouts with computed 1RM percentages.
+        *   `WorkoutPage.tsx`: Core component for creating and editing workouts. Supports drag-and-drop re-ordering of exercises and sets, set intensity percentage indicators (%W and %E1RM over global E1RM estimate), and creating templates of saved workouts with computed 1RM percentages. Uses cache lookup from `['workouts', userId]` React Query data instead of a separate single-workout fetch.
         *   `WorkoutListPage.tsx`: A component for listing workouts.
         *   `ExercisesPage.tsx`: A component for managing custom exercises.
         *   `TemplatesPage.tsx`: A component for creating and managing workout templates.

@@ -29,8 +29,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/friendships/$(friendshipId)).data.status == 'accepted';
     }
 
-    // ─── Workouts ────────────────────────────────────────────────────────────
+    // ─── Workouts (legacy — no longer used, deny all access) ─────────────────
     match /workouts/{workoutId} {
+      allow read, write: if false;
+    }
+
+    // ─── Workout Years (bucketed) ──────────────────────────────────────────────
+    match /workoutYears/{yearDocId} {
       // Owner can read, update, delete
       allow read, update, delete: if request.auth != null
         && request.auth.uid == resource.data.userId

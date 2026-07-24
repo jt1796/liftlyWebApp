@@ -34,12 +34,13 @@ import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import {
-  getWorkoutById,
   calculateOneRepMax,
   findSetToPR,
   getE1RmSuggestions,
   getCustomExercises,
   getWorkoutsForUser,
+  saveWorkout,
+  deleteWorkout,
   createFilterOptions,
   workoutToText,
   getExerciseHistory,
@@ -54,8 +55,7 @@ import {
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { db } from '../firebase';
-import { collection, addDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
+
 import { useAuth } from '../contexts/auth-context-utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CustomExercise } from '../types';
@@ -98,14 +98,21 @@ const WorkoutPage: React.FC = () => {
   const [templateDraft, setTemplateDraft] = useState<Template | null>(null);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
+  // Look up the workout from the cached workouts list instead of a separate Firestore read
+  const cachedWorkouts = queryClient.getQueryData<Workout[]>(['workouts', currentUser?.uid]);
+  const fetchedWorkout = useMemo(
+    () => cachedWorkouts?.find(w => w.id === id) ?? null,
+    [cachedWorkouts, id]
+  );
+
+  // If cache is cold (e.g. direct URL navigation), the full workouts query will fire
   const {
-    data: fetchedWorkout,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['workout', id],
-    queryFn: () => getWorkoutById(id!),
-    enabled: !!id,
+    queryKey: ['workouts', currentUser?.uid],
+    queryFn: () => getWorkoutsForUser(currentUser!.uid),
+    enabled: !!currentUser && !!id && !fetchedWorkout,
   });
 
   const { data: customExercises = [] } = useQuery({
@@ -265,7 +272,7 @@ const WorkoutPage: React.FC = () => {
 
 
   const handleDeleteWorkout = async () => {
-    if (!currentUser || !id) {
+    if (!currentUser || !id || !workout) {
       console.error('User not logged in or workout ID is missing.');
       return;
     }
@@ -276,13 +283,12 @@ const WorkoutPage: React.FC = () => {
 
     try {
       setIsSaving(true);
-      const workoutDocRef = doc(db, 'workouts', id);
-      await deleteDoc(workoutDocRef);
+      await deleteWorkout(currentUser.uid, id, workout.date);
       await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
       navigate('/workouts');
     } catch (error) {
       console.error('Error deleting workout:', error);
-      setSnackbarMessage('Error saving workout.');
+      setSnackbarMessage('Error deleting workout.');
       setSnackbarSeverity('error');
       setShowSnackbar(true);
     } finally {
@@ -298,23 +304,15 @@ const WorkoutPage: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const workoutData = {
-        ...workout,
-        userId: currentUser.uid,
-      };
+      const savedId = await saveWorkout(currentUser.uid, workout, id);
+      await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
 
       if (id) {
-        const workoutDocRef = doc(db, 'workouts', id);
-        await setDoc(workoutDocRef, workoutData);
-        await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
-        await queryClient.invalidateQueries({ queryKey: ['workout', id] });
         navigate(`/workout/${id}`);
         setSnackbarMessage('Workout updated successfully!');
       } else {
-        const res = await addDoc(collection(db, 'workouts'), workoutData);
-        await queryClient.invalidateQueries({ queryKey: ['workouts', currentUser.uid] });
         localStorage.removeItem(localStorageKey);
-        navigate(`/workout/${res.id}`);
+        navigate(`/workout/${savedId}`);
         setSnackbarMessage('Workout created successfully!');
       }
       setSnackbarSeverity('success');
