@@ -79,7 +79,13 @@ const TemplatesPage = () => {
   );
   const [rmsToUse, setRmsToUse] = useState<Record<string, number>>({});
 
-  const { data: templates = [], isLoading: isLoadingTemplates } = useQuery({
+  const {
+    data: templates = [],
+    isLoading: isLoadingTemplates,
+    isError: isTemplatesError,
+    error: templatesError,
+    refetch: refetchTemplates,
+  } = useQuery({
     queryKey: ['templates', currentUser?.uid],
     queryFn: async () => {
       const fetched = await getTemplates(currentUser!.uid);
@@ -89,6 +95,7 @@ const TemplatesPage = () => {
   });
 
   const onDragEnd = (result: DropResult) => {
+    if (isLoadingTemplates || isTemplatesError) return;
     const { destination, source } = result;
 
     if (!destination) return;
@@ -130,6 +137,9 @@ const TemplatesPage = () => {
 
   const mutation = useMutation({
     mutationFn: async (updatedTemplates: Template[]) => {
+      if (!currentUser || queryClient.getQueryState(['templates', currentUser.uid])?.status !== 'success') {
+        throw new Error('Templates have not loaded successfully.');
+      }
       await saveTemplates(currentUser!.uid, updatedTemplates);
     },
     onMutate: async (updatedTemplates) => {
@@ -166,6 +176,7 @@ const TemplatesPage = () => {
   });
 
   const handleOpenDialog = (index?: number) => {
+    if (isLoadingTemplates || isTemplatesError) return;
     if (index !== undefined && templates[index]) {
       // Deep copy to avoid mutating the cached data directly
       setSelectedTemplate(JSON.parse(JSON.stringify(templates[index])));
@@ -183,6 +194,7 @@ const TemplatesPage = () => {
   };
 
   const handleSaveTemplate = () => {
+    if (!currentUser || isLoadingTemplates || isTemplatesError) return;
     const newName = selectedTemplate.name.trim();
     if (newName === '') {
       setSnackbarMessage('Template name cannot be empty.');
@@ -206,6 +218,7 @@ const TemplatesPage = () => {
   };
 
   const handleDeleteTemplate = (index: number) => {
+    if (isLoadingTemplates || isTemplatesError) return;
     if (window.confirm('Are you sure you want to delete this template?')) {
       const updatedTemplates = templates.filter((_, i) => i !== index);
       mutation.mutate(updatedTemplates);
@@ -312,6 +325,10 @@ const TemplatesPage = () => {
     <Container sx={{ mt: 2, mb: 4 }}>
       {isLoadingTemplates ? (
         <CircularProgress />
+      ) : isTemplatesError ? (
+        <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void refetchTemplates()}>Retry</Button>}>
+          Could not load your templates. Editing is disabled to protect your saved list. {templatesError instanceof Error ? templatesError.message : ''}
+        </Alert>
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="templates">
@@ -475,7 +492,7 @@ const TemplatesPage = () => {
         </DialogContent>
         <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSaveTemplate} variant="contained" disabled={mutation.isPending}>
+          <Button onClick={handleSaveTemplate} variant="contained" disabled={mutation.isPending || isLoadingTemplates || isTemplatesError || !currentUser}>
             {mutation.isPending ? <CircularProgress size={24} /> : 'Save'}
           </Button>
         </DialogActions>
@@ -527,6 +544,7 @@ const TemplatesPage = () => {
         variant="contained"
         onClick={() => handleOpenDialog()}
         sx={{ mt: 3, mb: 2 }} // Added margin-top to separate from cards
+        disabled={isLoadingTemplates || isTemplatesError || !currentUser}
       >
         Create New Template
       </Button>

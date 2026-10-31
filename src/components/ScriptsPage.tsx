@@ -169,7 +169,13 @@ const ScriptsPage = () => {
   const [debugProgress, setDebugProgress] = useState<{ current: number; total: number } | null>(null);
   const [unknownExercises, setUnknownExercises] = useState<string[]>([]);
 
-  const { data: scripts = [], isLoading: isLoadingScripts } = useQuery({
+  const {
+    data: scripts = [],
+    isLoading: isLoadingScripts,
+    isError: isScriptsError,
+    error: scriptsError,
+    refetch: refetchScripts,
+  } = useQuery({
     queryKey: ['scripts', currentUser?.uid],
     queryFn: async () => {
       const fetched = await getScripts(currentUser!.uid);
@@ -195,6 +201,9 @@ const ScriptsPage = () => {
 
   const mutation = useMutation({
     mutationFn: async (updatedScripts: Script[]) => {
+      if (!currentUser || queryClient.getQueryState(['scripts', currentUser.uid])?.status !== 'success') {
+        throw new Error('Scripts have not loaded successfully.');
+      }
       await saveScripts(currentUser!.uid, updatedScripts);
     },
     onSuccess: () => {
@@ -213,6 +222,7 @@ const ScriptsPage = () => {
   });
 
   const handleOpenDialog = (index?: number) => {
+    if (isLoadingScripts || isScriptsError) return;
     if (index !== undefined && scripts[index]) {
       setSelectedScript(JSON.parse(JSON.stringify(scripts[index])));
       setEditingScriptIndex(index);
@@ -229,6 +239,7 @@ const ScriptsPage = () => {
   };
 
   const handleSaveScript = () => {
+    if (!currentUser || isLoadingScripts || isScriptsError) return;
     const newName = selectedScript.name.trim();
     if (newName === '') {
       setSnackbarMessage('Script name cannot be empty.');
@@ -252,7 +263,7 @@ const ScriptsPage = () => {
   };
 
   const handleExecuteScript = async (script: Script, debug: boolean = false) => {
-    if (!currentUser) return;
+    if (!currentUser || isLoadingScripts || isScriptsError) return;
 
     setExecutingScriptId(script.id || null);
     setDebugResults([]);
@@ -341,6 +352,7 @@ const ScriptsPage = () => {
   };
 
   const handleDeleteScript = (index: number) => {
+    if (isLoadingScripts || isScriptsError) return;
     if (window.confirm('Are you sure you want to delete this script?')) {
       const updatedScripts = scripts.filter((_, i) => i !== index);
       mutation.mutate(updatedScripts);
@@ -361,6 +373,10 @@ const ScriptsPage = () => {
     <Container sx={{ mt: 2, mb: 4 }}>
       {isLoadingScripts ? (
         <CircularProgress />
+      ) : isScriptsError ? (
+        <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void refetchScripts()}>Retry</Button>}>
+          Could not load your scripts. Editing and execution are disabled to protect your saved list. {scriptsError instanceof Error ? scriptsError.message : ''}
+        </Alert>
       ) : (
         <Stack spacing={1}>
           {scripts.map((script, index) => (
@@ -425,6 +441,7 @@ const ScriptsPage = () => {
         variant="contained"
         onClick={() => handleOpenDialog()}
         sx={{ mt: 3 }}
+        disabled={isLoadingScripts || isScriptsError || !currentUser}
       >
         Create New Script
       </Button>
@@ -487,7 +504,7 @@ const ScriptsPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSaveScript} variant="contained" disabled={mutation.isPending}>
+          <Button onClick={handleSaveScript} variant="contained" disabled={mutation.isPending || isLoadingScripts || isScriptsError || !currentUser}>
             {mutation.isPending ? <CircularProgress size={24} /> : 'Save'}
           </Button>
         </DialogActions>
