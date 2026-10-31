@@ -23,7 +23,13 @@ const ExercisesPage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
-  const { data: customExercises = [] } = useQuery({
+  const {
+    data: customExercises = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['custom-exercises', currentUser?.uid],
     queryFn: () => getCustomExercises(currentUser!.uid),
     enabled: !!currentUser,
@@ -85,19 +91,26 @@ const ExercisesPage = () => {
       <Typography variant="h4" gutterBottom>
         Custom Exercises
       </Typography>
+      {isError && (
+        <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void refetch()}>Retry</Button>} sx={{ mb: 2 }}>
+          Could not load your custom exercises. Adding or deleting is disabled to protect your saved list. {error instanceof Error ? error.message : ''}
+        </Alert>
+      )}
+      {isLoading && <Typography color="text.secondary" sx={{ mb: 2 }}>Loading your exercises…</Typography>}
       <TextField
         label="New Exercise Name"
         value={newExerciseName}
         onChange={(e) => setNewExerciseName(e.target.value)}
         variant="outlined"
         size="small"
+        disabled={isLoading || isError || !currentUser}
       />
       <Button
         onClick={handleAddExercise}
         variant="contained"
         color="primary"
         style={{ marginLeft: '1rem' }}
-        disabled={newExerciseName.trim() === '' || mutation.isPending}
+        disabled={newExerciseName.trim() === '' || mutation.isPending || isLoading || isError || !currentUser}
       >
         {mutation.isPending ? 'Adding...' : 'Add'}
       </Button>
@@ -109,7 +122,7 @@ const ExercisesPage = () => {
               <Button
                 onClick={() => handleDeleteExercise(exercise.name)}
                 color="secondary"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || isLoading || isError}
               >
                 Delete
               </Button>
