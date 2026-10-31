@@ -27,17 +27,24 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Paper,
+  Card,
+  CardContent,
+  Stack,
+  Autocomplete,
+  FormControl,
+  Collapse,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
-import ConstructionIcon from '@mui/icons-material/Construction';
-import TerminalIcon from '@mui/icons-material/Terminal';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import { LineChart } from '@mui/x-charts/LineChart';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/auth-context-utils';
@@ -48,8 +55,15 @@ import {
   acceptFriendRequest,
   removeFriendship,
   getWorkoutsForUser,
+  getTemplates,
+  saveTemplates,
+  getCustomExercises,
+  saveCustomExercises,
 } from '../utils/database';
-import type { Friendship, UserProfile } from '../types';
+import { calculateAllPRs, calculateExerciseMetrics, getLatestExercisePRs } from '../utils';
+import { exercises as builtInExercises } from '../data/exercises';
+import type { Friendship, UserProfile, Workout, Template, CustomExercise } from '../types';
+import { useTheme } from '@mui/material/styles';
 import WorkoutHeatmap from './WorkoutHeatmap';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -65,7 +79,6 @@ interface FriendRowProps {
 }
 
 const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const friendUid =
@@ -184,57 +197,14 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
             </Avatar>
           </ListItemAvatar>
           <ListItemText primary={displayName} />
-        </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 0.5,
-            ml: { xs: 0, sm: 'auto' },
-            mt: { xs: 0.5, sm: 0 },
-            flexWrap: 'wrap',
-            width: { xs: '100%', sm: 'auto' },
-            justifyContent: 'flex-start',
-          }}
-        >
-          <Tooltip title="View workouts">
-            <IconButton
-              onClick={() => navigate(`/friends/${friendUid}/workouts`)}
-              id={`view-workouts-${friendUid}`}
-            >
-              <MenuBookIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="View templates">
-            <IconButton
-              onClick={() => navigate(`/friends/${friendUid}/templates`)}
-              id={`view-templates-${friendUid}`}
-            >
-              <ConstructionIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="View scripts">
-            <IconButton
-              onClick={() => navigate(`/friends/${friendUid}/scripts`)}
-              id={`view-scripts-${friendUid}`}
-            >
-              <TerminalIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="View records">
-            <IconButton
-              onClick={() => navigate(`/friends/${friendUid}/records`)}
-              id={`view-records-${friendUid}`}
-            >
-              <QueryStatsIcon />
-            </IconButton>
-          </Tooltip>
           <Tooltip title="Remove friend">
-            <span style={{ marginLeft: 'auto' }}>
+            <span>
               <IconButton
                 color="error"
                 onClick={() => setIsConfirmOpen(true)}
                 disabled={removeMutation.isPending}
                 id={`remove-friend-${friendUid}`}
+                size="small"
               >
                 <PersonRemoveIcon />
               </IconButton>
@@ -293,11 +263,18 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
 const FriendsPage = () => {
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const theme = useTheme();
 
   const [codeInput, setCodeInput] = useState('');
   const [lookupProfile, setLookupProfile] = useState<UserProfile | null | 'not-found'>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [tab, setTab] = useState(0);
+  const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
+  const [expandedWorkoutId, setExpandedWorkoutId] = useState<string | null>(null);
+  const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [rmsToUse, setRmsToUse] = useState<Record<string, number>>({});
   const [snackbar, setSnackbar] = useState<string | null>(null);
 
   const {
@@ -348,6 +325,133 @@ const FriendsPage = () => {
 
   const pending = friendships.filter((f) => f.status === 'pending');
   const accepted = friendships.filter((f) => f.status === 'accepted');
+  const acceptedFriendUids = useMemo(() => accepted.map((f) =>
+    f.requesterId === currentUser?.uid ? f.receiverId : f.requesterId
+  ), [accepted, currentUser?.uid]);
+
+  const { data: sharedData = { workouts: [] as Array<{ uid: string; workout: Workout }>, templates: [] as Array<{ uid: string; template: Template }>, customExercises: [] as Array<{ uid: string; exercise: CustomExercise }> }, isLoading: sharedLoading, error: sharedError } = useQuery({
+    queryKey: ['friendsSharedContent', acceptedFriendUids],
+    enabled: acceptedFriendUids.length > 0,
+    queryFn: async () => {
+      const perFriend = await Promise.all(acceptedFriendUids.map(async (uid) => {
+        const [workouts, templates, customExercises] = await Promise.all([
+          getWorkoutsForUser(uid), getTemplates(uid), getCustomExercises(uid),
+        ]);
+        return { uid, workouts, templates, customExercises };
+      }));
+      return {
+        workouts: perFriend.flatMap(({ uid, workouts }) => workouts.map((workout) => ({ uid, workout })))
+          .sort((a, b) => b.workout.date.getTime() - a.workout.date.getTime()),
+        templates: perFriend.flatMap(({ uid, templates }) => templates.map((template) => ({ uid, template }))),
+        customExercises: perFriend.flatMap(({ uid, customExercises }) => customExercises.map((exercise) => ({ uid, exercise }))),
+      };
+    },
+  });
+
+  const ownCustomQuery = useQuery({
+    queryKey: ['customExercises', currentUser?.uid],
+    queryFn: () => getCustomExercises(currentUser!.uid),
+    enabled: !!currentUser,
+  });
+  const ownWorkoutsQuery = useQuery({
+    queryKey: ['workouts', currentUser?.uid],
+    queryFn: () => getWorkoutsForUser(currentUser!.uid),
+    enabled: !!currentUser,
+  });
+
+  const importTemplateMutation = useMutation({
+    mutationFn: async ({ uid, template }: { uid: string; template: Template }) => {
+      const templates = await getTemplates(currentUser!.uid);
+      const imported: Template = {
+        ...template,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        name: `${template.name} (from ${profiles[uid]?.displayName ?? 'Friend'})`,
+      };
+      await saveTemplates(currentUser!.uid, [...templates, imported]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates', currentUser?.uid] });
+      setSnackbar('Template copied to your templates.');
+    },
+    onError: (error) => setSnackbar(`Could not copy template: ${(error as Error).message}`),
+  });
+  const copyExerciseMutation = useMutation({
+    mutationFn: async (exercise: CustomExercise) => {
+      const existing = await getCustomExercises(currentUser!.uid);
+      if (existing.some((item) => item.name.toLocaleLowerCase() === exercise.name.toLocaleLowerCase())) return;
+      await saveCustomExercises(currentUser!.uid, [...existing, exercise]);
+    },
+    onSuccess: (_, exercise) => {
+      queryClient.invalidateQueries({ queryKey: ['customExercises', currentUser?.uid] });
+      setSnackbar(`${exercise.name} added to your custom exercises.`);
+    },
+    onError: (error) => setSnackbar(`Could not copy exercise: ${(error as Error).message}`),
+  });
+  const customExerciseRows = sharedData.customExercises.filter(({ exercise }) =>
+    ![...builtInExercises, ...(ownCustomQuery.data ?? []).map((item) => item.name)]
+      .some((name) => name.toLocaleLowerCase() === exercise.name.toLocaleLowerCase())
+  );
+  const availableExercises = useMemo(() => Array.from(new Set([
+    ...sharedData.workouts.flatMap(({ workout }) => workout.exercises.map((exercise) => exercise.name)),
+    ...(ownWorkoutsQuery.data ?? []).flatMap((workout) => workout.exercises.map((exercise) => exercise.name)),
+  ])).sort(), [sharedData.workouts, ownWorkoutsQuery.data]);
+  const workoutHistoryByLifter = useMemo(() => [
+    ...(currentUser ? [{ uid: currentUser.uid, workouts: ownWorkoutsQuery.data ?? [] }] : []),
+    ...acceptedFriendUids.map((uid) => ({
+      uid,
+      workouts: sharedData.workouts.filter((item) => item.uid === uid).map((item) => item.workout),
+    })),
+  ], [currentUser, ownWorkoutsQuery.data, acceptedFriendUids, sharedData.workouts]);
+  const getLifterName = (uid: string) => uid === currentUser?.uid
+    ? currentUser.displayName ?? 'You'
+    : profiles[uid]?.displayName ?? 'Friend';
+  const recordsByFriend = useMemo(() => selectedExercise ? workoutHistoryByLifter.map(({ uid, workouts }) => ({
+    uid, workouts, metrics: calculateExerciseMetrics(workouts, selectedExercise),
+  })).filter((item) => item.metrics.length > 0) : [], [selectedExercise, workoutHistoryByLifter]);
+  const selectedExercisePRs = selectedExercise ? workoutHistoryByLifter.flatMap(({ uid, workouts }) => {
+    return calculateAllPRs(workouts)
+      .filter((pr) => pr.exerciseName === selectedExercise && pr.oldValue !== null)
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5)
+      .map((pr) => ({ ...pr, uid }));
+  }).sort((a, b) => b.date.getTime() - a.date.getTime()) : [];
+  const recordChartDates = useMemo(() => Array.from(new Map(
+    recordsByFriend.flatMap(({ metrics }) => metrics.map((point) => [point.date.getTime(), point.date] as const))
+  ).values()).sort((a, b) => a.getTime() - b.getTime()), [recordsByFriend]);
+  const recordChartColors = [
+    theme.palette.primary.main,
+    theme.palette.secondary.main,
+    theme.palette.success.main,
+    theme.palette.warning.main,
+    theme.palette.error.main,
+    theme.palette.info.main,
+  ];
+
+  const handleStartTemplate = (template: Template) => {
+    setSelectedTemplate(template);
+    const initialRms: Record<string, number> = {};
+    Array.from(new Set(template.exercises.map((exercise) => exercise.name))).forEach((name) => {
+      initialRms[name] = getLatestExercisePRs(ownWorkoutsQuery.data ?? [], name).e1rm?.value || 0;
+    });
+    setRmsToUse(initialRms);
+  };
+
+  const confirmStartTemplate = () => {
+    if (!selectedTemplate) return;
+    const workoutFromTemplate = {
+      title: selectedTemplate.name,
+      date: new Date(),
+      exercises: selectedTemplate.exercises.map((exercise) => ({
+        ...exercise,
+        sets: exercise.sets.map((set) => ({
+          ...set,
+          weight: Math.round(((set.weight / 100) * (rmsToUse[exercise.name] || 0)) / 5) * 5,
+        })),
+      })),
+    };
+    localStorage.setItem('liftly-currentWorkout', JSON.stringify(workoutFromTemplate));
+    navigate('/workout');
+  };
 
   // ─── Code lookup ─────────────────────────────────────────────────────────
 
@@ -382,11 +486,7 @@ const FriendsPage = () => {
   if (!currentUser) return null;
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        Friends
-      </Typography>
-
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* ─── Friends List ─────────────────────────────────────────── */}
       {friendshipsLoading && <CircularProgress sx={{ display: 'block', my: 2 }} />}
       {friendshipsError && (
@@ -397,10 +497,22 @@ const FriendsPage = () => {
 
       {!friendshipsLoading && (
         <>
+          <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexWrap: 'wrap', gap: 1, my: 1.5 }}>
+            {['Friends', 'Workouts', 'Templates', 'Custom Exercises', 'Records'].map((label, index) => <Button
+              key={label}
+              size="small"
+              variant={tab === index ? 'contained' : 'outlined'}
+              onClick={() => setTab(index)}
+              aria-pressed={tab === index}
+              sx={{ borderRadius: 999, minWidth: 0, px: 1.75 }}
+            >{label}</Button>)}
+          </Box>
           <Tabs
             value={tab}
             onChange={(_, v) => setTab(v)}
-            sx={{ mb: 1 }}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ mb: 1, display: { xs: 'none', sm: 'flex' } }}
             id="friends-tabs"
           >
             <Tab
@@ -414,195 +526,197 @@ const FriendsPage = () => {
                 </Box>
               }
             />
-            <Tab
-              id="tab-pending"
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  Pending
-                  {pending.length > 0 && (
-                    <Chip label={pending.length} color="warning" size="small" />
-                  )}
-                </Box>
-              }
-            />
+            <Tab id="tab-workouts" label="Workouts" />
+            <Tab label="Templates" />
+            <Tab label="Custom Exercises" />
+            <Tab label="Records" />
           </Tabs>
 
           <Divider />
 
-          {tab === 0 && (
-            <List disablePadding>
-              {accepted.length === 0 ? (
-                <Typography
-                  color="text.secondary"
-                  sx={{ p: 2, textAlign: 'center' }}
-                >
-                  No friends yet. Expand the section below to share your invite code and get started!
-                </Typography>
-              ) : (
-                accepted.map((f) => (
-                  <FriendRow
-                    key={f.id}
-                    friendship={f}
-                    currentUid={currentUser.uid}
-                    profiles={profiles}
-                  />
-                ))
-              )}
-            </List>
-          )}
-
-          {tab === 1 && (
-            <List disablePadding>
-              {pending.length === 0 ? (
-                <Typography
-                  color="text.secondary"
-                  sx={{ p: 2, textAlign: 'center' }}
-                >
-                  No pending requests.
-                </Typography>
-              ) : (
-                pending.map((f) => (
-                  <FriendRow
-                    key={f.id}
-                    friendship={f}
-                    currentUid={currentUser.uid}
-                    profiles={profiles}
-                  />
-                ))
-              )}
-            </List>
-          )}
+          {tab === 0 && <>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, mb: 1 }}>
+              <Typography variant="h6">Your friends</Typography>
+            </Box>
+            {accepted.length === 0 ? <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>No friends yet. Share your invite code below to get started.</Paper> :
+              <List disablePadding sx={{ display: 'grid', gap: 1.5 }}>{accepted.map((f) => <Paper key={f.id} variant="outlined" sx={{ overflow: 'hidden' }}><FriendRow friendship={f} currentUid={currentUser.uid} profiles={profiles} /></Paper>)}</List>}
+            {pending.length > 0 && <Box sx={{ mt: 3 }}><Typography variant="h6" sx={{ mb: 1 }}>Friend requests <Chip label={pending.length} color="warning" size="small" sx={{ ml: 1 }} /></Typography><List disablePadding sx={{ display: 'grid', gap: 1 }}>{pending.map((f) => <Paper key={f.id} variant="outlined"><FriendRow friendship={f} currentUid={currentUser.uid} profiles={profiles} /></Paper>)}</List></Box>}
+            <Accordion defaultExpanded variant="outlined" sx={{ mt: 3 }} id="invite-add-friend-accordion">
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} id="invite-add-friend-header"><Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><PersonAddIcon color="primary"/><Typography fontWeight={700}>Add a friend or share your code</Typography></Box></AccordionSummary>
+              <AccordionDetails sx={{ px: 3, pb: 3 }}>
+                <Typography variant="subtitle2" fontWeight={700} gutterBottom>Your invite code</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Share this code so a friend can send you a request.</Typography>
+                <Box sx={{ display: 'flex', gap: 1, mb: 3 }}><TextField value={formatInviteCode(currentUser.uid)} fullWidth size="small" inputProps={{ readOnly: true, id: 'invite-code-field' }}/><Button id="copy-invite-code-btn" variant="contained" startIcon={<ContentCopyIcon />} onClick={handleCopyCode}>Copy</Button></Box>
+                <Divider sx={{ mb: 2 }}/><Typography variant="subtitle2" fontWeight={700} gutterBottom>Add a friend</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>Enter their invite code to send a request.</Typography>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}><TextField id="friend-code-input" label="Friend's invite code" value={codeInput} onChange={(e) => { setCodeInput(e.target.value); setLookupProfile(null); }} fullWidth size="small" onKeyDown={(e) => e.key === 'Enter' && handleLookup()}/><Button id="lookup-friend-btn" variant="outlined" onClick={handleLookup} disabled={!codeInput.trim() || lookupLoading}>{lookupLoading ? <CircularProgress size={20}/> : 'Look up'}</Button></Box>
+                {lookupProfile === 'not-found' && <Alert severity="error">No user found with that invite code.</Alert>}
+                {lookupProfile && lookupProfile !== 'not-found' && <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}><Avatar src={lookupProfile.photoURL ?? undefined}>{(lookupProfile.displayName ?? '?')[0].toUpperCase()}</Avatar><Typography sx={{ flex: 1 }}>{lookupProfile.displayName ?? 'Unknown user'}</Typography>{alreadyFriends(lookupProfile.uid) ? <Chip label="Already friends / requested" size="small"/> : <Button id="send-friend-request-btn" variant="contained" startIcon={<PersonAddIcon/>} onClick={() => sendRequestMutation.mutate(lookupProfile.uid)} disabled={sendRequestMutation.isPending}>{sendRequestMutation.isPending ? 'Sending…' : 'Add Friend'}</Button>}</Box>}
+                {sendRequestMutation.isError && <Alert severity="error" sx={{ mt: 1 }}>{(sendRequestMutation.error as Error).message}</Alert>}
+              </AccordionDetails>
+            </Accordion>
+          </>}
+          {tab > 0 && sharedError && <Alert severity="error" sx={{ mt: 2 }}>{(sharedError as Error).message}</Alert>}
+          {tab > 0 && sharedLoading && <CircularProgress sx={{ my: 3 }} />}
+          {tab === 1 && !sharedLoading && <Stack spacing={1.5} sx={{ mt: 2 }}>
+            {sharedData.workouts.length === 0 ? <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>No friend workouts to show yet.</Paper> : sharedData.workouts.map(({ uid, workout }) => {
+              const workoutId = `${uid}-${workout.id ?? workout.date.getTime()}`;
+              const isExpanded = expandedWorkoutId === workoutId;
+              const friendWorkouts = sharedData.workouts.filter((item) => item.uid === uid).map((item) => item.workout);
+              const workoutPRs = calculateAllPRs(friendWorkouts).filter((pr) =>
+                pr.oldValue !== null && pr.date.getTime() === workout.date.getTime()
+              );
+              return <Card variant="outlined" key={workoutId}>
+                <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
+                  <Box
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    onClick={() => setExpandedWorkoutId(isExpanded ? null : workoutId)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setExpandedWorkoutId(isExpanded ? null : workoutId);
+                      }
+                    }}
+                    sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, cursor: 'pointer' }}
+                  >
+                    <Avatar src={profiles[uid]?.photoURL ?? undefined}>{(profiles[uid]?.displayName ?? '?')[0].toUpperCase()}</Avatar>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography fontWeight={700}>{workout.title || workout.exercises.map((item) => item.name).join(', ') || 'Workout'}</Typography>
+                      <Typography variant="body2" color="text.secondary">{profiles[uid]?.displayName ?? 'Friend'} · {workout.date.toLocaleDateString()} · {workout.exercises.length} exercises</Typography>
+                      <Typography variant="caption" color="text.secondary">{workout.exercises.map((item) => item.name).join(' · ')}</Typography>
+                    </Box>
+                    {workoutPRs.length > 0 && <Tooltip title={<Box sx={{ p: 0.5 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '0.75rem' }}>Personal Records Broken:</Typography>
+                      {workoutPRs.map((pr, index) => <Typography key={`${pr.exerciseName}-${pr.type}-${index}`} variant="caption" display="block">• {pr.exerciseName} ({pr.type}): {pr.oldValue} → {pr.value} lbs</Typography>)}
+                    </Box>} arrow>
+                      <Box sx={{ display: 'inline-flex', alignItems: 'center', px: 0.5 }}>
+                        <WorkspacePremiumIcon sx={{ color: '#FFD700' }} />
+                        {workoutPRs.length > 1 && <Typography component="sup" sx={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#FFD700', ml: 0.25, alignSelf: 'flex-start', lineHeight: 1, mt: -0.25 }}>{workoutPRs.length}</Typography>}
+                      </Box>
+                    </Tooltip>}
+                    {isExpanded ? <ExpandLessIcon color="action" /> : <ExpandMoreIcon color="action" />}
+                  </Box>
+                  <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                    <Divider />
+                    <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover' }}>
+                      {workout.exercises.map((exercise, exerciseIndex) => {
+                        const exercisePRs = workoutPRs.filter((pr) => pr.exerciseName === exercise.name);
+                        return <Box key={`${exercise.name}-${exerciseIndex}`} sx={{ mb: exerciseIndex < workout.exercises.length - 1 ? 1.5 : 0 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                          <Typography variant="body2" fontWeight={700}>{exercise.name}</Typography>
+                          {exercisePRs.map((pr, prIndex) => <Chip key={`${pr.type}-${prIndex}`} label={`${pr.type}: ${pr.oldValue} → ${pr.value} lb`} size="small" color="warning" variant="outlined" />)}
+                        </Box>
+                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 0.5 }}>
+                          {exercise.sets.map((set, setIndex) => <Chip key={set.id ?? setIndex} label={`${set.weight} lb × ${set.reps}`} size="small" variant="outlined" />)}
+                        </Stack>
+                      </Box>})}
+                    </Box>
+                  </Collapse>
+                </CardContent>
+              </Card>;
+            })}
+          </Stack>}
+          {tab === 2 && !sharedLoading && <Stack spacing={3} sx={{ mt: 2 }}>{sharedData.templates.length === 0 ? <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>No friend templates to show yet.</Paper> : acceptedFriendUids.map((uid) => {
+            const friendTemplates = sharedData.templates.filter((item) => item.uid === uid);
+            if (friendTemplates.length === 0) return null;
+            return <Box key={uid}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.25 }}>
+                <Avatar src={profiles[uid]?.photoURL ?? undefined} sx={{ width: 32, height: 32 }}>{(profiles[uid]?.displayName ?? '?')[0].toUpperCase()}</Avatar>
+                <Typography variant="h6">{profiles[uid]?.displayName ?? 'Friend'}</Typography>
+                <Chip label={friendTemplates.length} size="small" />
+              </Box>
+              <Stack spacing={1.5}>{friendTemplates.map(({ template }, index) => {
+                const templateId = `${uid}-${template.id ?? template.name}-${index}`;
+                const isExpanded = expandedTemplateId === templateId;
+                return <Card variant="outlined" key={templateId}>
+                  <CardContent sx={{ pb: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography fontWeight={700}>{template.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">{template.exercises.length} exercises</Typography>
+                      </Box>
+                      <Tooltip title="Start workout from template"><IconButton color="primary" onClick={() => handleStartTemplate(template)} id={`start-workout-${templateId}`}><PlayArrowIcon /></IconButton></Tooltip>
+                      <Tooltip title="Copy to My Templates"><span><IconButton color="secondary" onClick={() => importTemplateMutation.mutate({ uid, template })} disabled={importTemplateMutation.isPending} id={`copy-template-${templateId}`}><ContentCopyIcon /></IconButton></span></Tooltip>
+                      <Tooltip title={isExpanded ? 'Hide template details' : 'View template details'}><IconButton onClick={() => setExpandedTemplateId(isExpanded ? null : templateId)} id={`view-template-${templateId}`}>{isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}</IconButton></Tooltip>
+                    </Box>
+                  </CardContent>
+                  <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                    <Divider />
+                    <Stack spacing={1.25} sx={{ p: 2 }}>
+                      {template.exercises.map((exercise, exerciseIndex) => <Box key={`${exercise.name}-${exerciseIndex}`}>
+                        <Typography variant="body2" fontWeight={700}>{exercise.name}</Typography>
+                        <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap" sx={{ mt: 0.5 }}>{exercise.sets.map((set, setIndex) => <Chip key={set.id ?? setIndex} label={`${set.weight}% × ${set.reps} reps`} size="small" variant="outlined" />)}</Stack>
+                      </Box>)}
+                    </Stack>
+                  </Collapse>
+                </Card>;
+              })}</Stack>
+            </Box>;
+          })}</Stack>}
+          {tab === 3 && !sharedLoading && <Box sx={{ mt: 2 }}>
+            <Typography color="text.secondary" sx={{ mb: 2 }}>Custom exercises shared by friends that aren’t in your exercise library.</Typography>
+            {customExerciseRows.length === 0 ? <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>No new custom exercises from friends.</Paper> : <Stack spacing={1}>{acceptedFriendUids.map((uid) => {
+              const friendExercises = customExerciseRows.filter((item) => item.uid === uid);
+              if (friendExercises.length === 0) return null;
+              return <Accordion key={uid} variant="outlined">
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Avatar src={profiles[uid]?.photoURL ?? undefined} sx={{ width: 30, height: 30 }}>{(profiles[uid]?.displayName ?? '?')[0].toUpperCase()}</Avatar>
+                    <Typography fontWeight={700}>{profiles[uid]?.displayName ?? 'Friend'}</Typography>
+                    <Chip label={friendExercises.length} size="small" />
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0 }}>
+                  <Stack spacing={1}>{friendExercises.map(({ exercise }, index) => <Paper key={`${exercise.name}-${index}`} variant="outlined" sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography fontWeight={600} sx={{ flex: 1 }}>{exercise.name}</Typography>
+                    <Tooltip title="Copy to My Custom Exercises"><span><IconButton aria-label={`Copy ${exercise.name}`} onClick={() => copyExerciseMutation.mutate(exercise)} disabled={copyExerciseMutation.isPending} color="primary"><ContentCopyIcon /></IconButton></span></Tooltip>
+                  </Paper>)}</Stack>
+                </AccordionDetails>
+              </Accordion>;
+            })}</Stack>}
+          </Box>}
+          {tab === 4 && !sharedLoading && <Box sx={{ mt: 2 }}>
+            <Typography color="text.secondary" sx={{ mb: 2 }}>Choose an exercise to compare each friend’s training history.</Typography>
+            <FormControl fullWidth sx={{ mb: 3 }}><Autocomplete value={selectedExercise} options={availableExercises} onChange={(_, value) => setSelectedExercise(value)} renderInput={(params) => <TextField {...params} label="Search exercise" />}/></FormControl>
+            {!selectedExercise ? <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>Select an exercise to see workout history.</Paper> : recordsByFriend.length === 0 ? <Paper variant="outlined" sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>No friend has logged {selectedExercise} yet.</Paper> : <Card variant="outlined"><CardContent>
+              <Typography variant="h6" fontWeight={700}>{selectedExercise} · Estimated 1RM</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Each line shows one friend’s training history.</Typography>
+              <LineChart
+                xAxis={[{ data: recordChartDates, scaleType: 'time', valueFormatter: (date) => date.toLocaleDateString() }]}
+                series={recordsByFriend.map(({ uid, metrics }, index) => ({
+                  id: uid,
+                  label: getLifterName(uid),
+                  data: recordChartDates.map((date) => metrics.find((point) => point.date.getTime() === date.getTime())?.estimatedOneRepMax ?? null),
+                  color: recordChartColors[index % recordChartColors.length],
+                }))}
+                height={360}
+                slotProps={{ legend: { direction: 'horizontal', position: { vertical: 'bottom', horizontal: 'center' } } }}
+              />
+              <Typography variant="h6" fontWeight={700} sx={{ mt: 2, mb: 1 }}>Personal records</Typography>
+              {selectedExercisePRs.length === 0 ? <Typography color="text.secondary">No PRs recorded for this exercise yet.</Typography> : <Stack spacing={1}>{selectedExercisePRs.map((pr, index) => <Paper key={`${pr.uid}-${pr.date.getTime()}-${pr.type}-${index}`} variant="outlined" sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography fontWeight={700} sx={{ flex: 1 }}>{getLifterName(pr.uid)}</Typography>
+                <Chip label={pr.type} size="small" />
+                <Typography>{pr.oldValue} → {pr.value} lb</Typography>
+                <Typography variant="body2" color="text.secondary">{pr.date.toLocaleDateString()}</Typography>
+              </Paper>)}</Stack>}
+            </CardContent></Card>}
+          </Box>}
         </>
       )}
 
-      {/* ─── Expandable Invite Code / Add Friend Box ─────────────── */}
-      <Accordion variant="outlined" sx={{ mt: 4, mb: 2 }} id="invite-add-friend-accordion">
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon />}
-          id="invite-add-friend-header"
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PersonAddIcon color="primary" />
-            <Typography variant="subtitle1" fontWeight="bold">
-              Add Friend / Share Invite Code
-            </Typography>
-          </Box>
-        </AccordionSummary>
-        <AccordionDetails sx={{ px: 3, pb: 3 }}>
-          {/* Your Invite Code */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-              Your Invite Code
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Share this code with a friend. They can paste it below to send you a
-              friend request.
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <TextField
-                value={formatInviteCode(currentUser.uid)}
-                fullWidth
-                size="small"
-                inputProps={{ readOnly: true, id: 'invite-code-field' }}
-                sx={{ fontFamily: 'monospace' }}
-              />
-              <Tooltip title="Copy code">
-                <Button
-                  id="copy-invite-code-btn"
-                  variant="contained"
-                  startIcon={<ContentCopyIcon />}
-                  onClick={handleCopyCode}
-                  sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                >
-                  Copy
-                </Button>
-              </Tooltip>
-            </Box>
-          </Box>
-
-          <Divider sx={{ my: 3 }} />
-
-          {/* Add a Friend */}
-          <Box>
-            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-              Add a Friend
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Enter your friend's invite code to send them a request.
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField
-                id="friend-code-input"
-                label="Friend's invite code"
-                value={codeInput}
-                onChange={(e) => {
-                  setCodeInput(e.target.value);
-                  setLookupProfile(null);
-                }}
-                fullWidth
-                size="small"
-                onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
-              />
-              <Button
-                id="lookup-friend-btn"
-                variant="outlined"
-                onClick={handleLookup}
-                disabled={!codeInput.trim() || lookupLoading}
-                sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-              >
-                {lookupLoading ? <CircularProgress size={20} /> : 'Look up'}
-              </Button>
-            </Box>
-
-            {lookupProfile === 'not-found' && (
-              <Alert severity="error">No user found with that invite code.</Alert>
-            )}
-
-            {lookupProfile && lookupProfile !== 'not-found' && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  p: 1.5,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                }}
-              >
-                <Avatar
-                  src={lookupProfile.photoURL ?? undefined}
-                  alt={lookupProfile.displayName ?? ''}
-                >
-                  {(lookupProfile.displayName ?? '?')[0].toUpperCase()}
-                </Avatar>
-                <Typography sx={{ flex: 1 }}>
-                  {lookupProfile.displayName ?? 'Unknown user'}
-                </Typography>
-                {alreadyFriends(lookupProfile.uid) ? (
-                  <Chip label="Already friends / requested" size="small" />
-                ) : (
-                  <Button
-                    id="send-friend-request-btn"
-                    variant="contained"
-                    startIcon={<PersonAddIcon />}
-                    onClick={() => sendRequestMutation.mutate(lookupProfile.uid)}
-                    disabled={sendRequestMutation.isPending}
-                  >
-                    {sendRequestMutation.isPending ? 'Sending…' : 'Add Friend'}
-                  </Button>
-                )}
-              </Box>
-            )}
-
-            {sendRequestMutation.isError && (
-              <Alert severity="error" sx={{ mt: 1 }}>
-                {(sendRequestMutation.error as Error).message}
-              </Alert>
-            )}
-          </Box>
-        </AccordionDetails>
-      </Accordion>
+      {selectedTemplate && <Dialog open onClose={() => setSelectedTemplate(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Enter 1RMs for Workout</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>Enter your current 1 Rep Max for each exercise to calculate the weights for this session.</Typography>
+          <Stack spacing={2} sx={{ mt: 1 }}>{Object.keys(rmsToUse).map((name) => <TextField key={name} label={`${name} 1RM`} type="number" value={rmsToUse[name]} onChange={(event) => setRmsToUse((previous) => ({ ...previous, [name]: parseFloat(event.target.value) || 0 }))} fullWidth />)}</Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSelectedTemplate(null)}>Cancel</Button>
+          <Button onClick={confirmStartTemplate} variant="contained">Start</Button>
+        </DialogActions>
+      </Dialog>}
 
       <Snackbar
         open={!!snackbar}
