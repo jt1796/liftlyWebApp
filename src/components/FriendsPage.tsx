@@ -193,7 +193,7 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
             mt: { xs: 0.5, sm: 0 },
             flexWrap: 'wrap',
             width: { xs: '100%', sm: 'auto' },
-            justifyContent: { xs: 'flex-end', sm: 'initial' },
+            justifyContent: 'flex-start',
           }}
         >
           <Tooltip title="View workouts">
@@ -229,7 +229,7 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Remove friend">
-            <span>
+            <span style={{ marginLeft: 'auto' }}>
               <IconButton
                 color="error"
                 onClick={() => setIsConfirmOpen(true)}
