@@ -189,9 +189,11 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
           sx={{
             display: 'flex',
             gap: 0.5,
-            ml: { xs: 7, sm: 'auto' },
+            ml: { xs: 0, sm: 'auto' },
             mt: { xs: 0.5, sm: 0 },
             flexWrap: 'wrap',
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: { xs: 'flex-end', sm: 'initial' },
           }}
         >
           <Tooltip title="View workouts">
