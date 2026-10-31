@@ -32,7 +32,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import ConstructionIcon from '@mui/icons-material/Construction';
@@ -201,7 +201,7 @@ const FriendRow = ({ friendship, currentUid, profiles }: FriendRowProps) => {
               onClick={() => navigate(`/friends/${friendUid}/workouts`)}
               id={`view-workouts-${friendUid}`}
             >
-              <FitnessCenterIcon />
+              <MenuBookIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="View templates">
