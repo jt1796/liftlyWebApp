@@ -5,6 +5,10 @@ export const exercises = [
   'Row (cardio)',
   'Slam ball',
   'Kettlebell swing',
+  'Pickleball',
+  'Pilates',
+  'Yoga',
+  'Stairclimber',
 
   'Squat',
   'Smith squat',
