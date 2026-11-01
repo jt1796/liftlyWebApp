@@ -7,6 +7,7 @@ export const exercises = [
   'Kettlebell swing',
 
   'Squat',
+  'Smith squat',
   'High bar squat',
   'Low bar squat',
   'Box squat',
@@ -28,6 +29,8 @@ export const exercises = [
   'Barbell static hold',
   'Farmers walk',
 
+  'Smith RDL deadlift',
+  'Smith row',
   'Deadlift',
   'Romanian deadlift RDL',
   'Stiff leg deadlift SLDL',
