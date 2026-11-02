@@ -11,7 +11,8 @@ service cloud.firestore {
         "Hz6eL8butaShNPqxSQlArpkppRl1",
         "oheul6D1SWZ0Kdz4mfxh6JWuRCM2",
         "W0bQxvC7jkOQkEqEhqVS0XnKfXT2",
-        "VpDcMmuxPzaNPi0PlMORXP0zexy2"
+        "VpDcMmuxPzaNPi0PlMORXP0zexy2",
+        "NrldtFA5p5Q6sU9XPdLm9xVWgrJ2"
       ];
       return request.auth.uid in allowedUserIds;
     }
